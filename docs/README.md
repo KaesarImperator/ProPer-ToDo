@@ -6,6 +6,7 @@
 |---|---|---|
 | [`00-estado-actual.md`](00-estado-actual.md) | Foto del proyecto en la última sesión | Al empezar cualquier sesión |
 | [`01-roadmap.md`](01-roadmap.md) | Fases, tareas y criterios de aceptación | Para elegir qué hacer |
+| [`fases/A1-fontaneria.md`](fases/A1-fontaneria.md) | Brief autosuficiente de la fase A1 | Al decir "Arranca A1" |
 | [`02-arquitectura.md`](02-arquitectura.md) | Diseño técnico: crate, provider, sync, mapeo VTODO | Antes de escribir código de integración |
 | [`03-radicale.md`](03-radicale.md) | Entorno de pruebas, Docker, credenciales, push a GitHub | Para levantar el entorno |
 | [`04-issues-upstream.md`](04-issues-upstream.md) | Análisis de las 14 issues abiertas de upstream | Para decidir qué arreglar |

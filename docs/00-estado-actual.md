@@ -23,13 +23,13 @@ Base elegida: fork de `cosmic-utils/cosmic-ext-tasks` (Rust + libcosmic, GPL-3.0
 
 ## En curso
 
-Nada. **Fase B cerrada.** Siguiente: fase A (integración en la app).
+**A1 — Fontanería del provider Radicale.** Brief autosuficiente en
+`docs/fases/A1-fontaneria.md`. Arranca con la frase **"Arranca A1"**.
 
 ## Pendiente inmediato
 
-1. Obtener la contraseña de `cesar` (vía `~/.config/proper-todo/test.env`) y repetir los tests de integración contra el servidor real.
-2. Validar que la app compila en esta máquina (build en curso).
-3. Empezar la fase A: dependencia `path`, `TaskSource::Radicale`, refactor de credenciales.
+1. Ejecutar A1 según su brief.
+2. Después: A2 (motor de sync) y A3 (UI + keyring).
 
 ## Resuelto
 

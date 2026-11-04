@@ -30,28 +30,40 @@ Tres fases. **Una fase por sesión.** Cada fase tiene criterio de aceptación ex
 
 ---
 
-## Fase A — Integración en la app ⬜
+## Fase A — Integración en la app
 
-**Objetivo:** que la app sincronice con Radicale como ya hace con Google/Microsoft.
+Partida en tres sub-fases para que cada sesión cierre limpia. Briefs detallados en `docs/fases/`.
 
-### Tareas
+### A1 — Fontanería 🟡 siguiente
 
-- [ ] Añadir `caldav-client = { path = "caldav-client" }` a `Cargo.toml`
-- [ ] `TaskSource::Radicale { account_id, remote_id, etag }` en `src/shared/store/source.rs`
-- [ ] Refactor del trait `RemoteTaskProvider`: sustituir `token: &str` por un enum de credenciales (ver `02-arquitectura.md` §Auth)
-- [ ] `src/shared/providers/radicale.rs` implementando el trait
-- [ ] Mapeo `Task` ↔ `Vtodo` (tabla en `02-arquitectura.md`)
-- [ ] Motor de sync con ETag + resolución de conflictos (412)
-- [ ] Almacenamiento de credenciales en keyring del sistema
-- [ ] UI de ajustes: URL, usuario, contraseña, botón "Probar conexión", selector de calendario
-- [ ] Tests de integración del mapeo (ida y vuelta sin pérdida)
+Brief: **[`fases/A1-fontaneria.md`](fases/A1-fontaneria.md)**
 
-### Criterio de aceptación
+- [ ] Dependencia `path` a `caldav-client`
+- [ ] `TaskSource::Radicale { account_id, remote_id }`
+- [ ] `ProviderCredentials` (Bearer / Basic) y refactor del trait
+- [ ] Campos nuevos en `RemoteTask`/`RemoteTaskDraft`
+- [ ] `src/shared/providers/radicale.rs` + mapeo `Vtodo` ↔ `RemoteTask`
+- [ ] Tests unitarios del mapeo
 
-1. Se crea una tarea en la app y aparece en Radicale en < 5 s.
-2. Se crea una tarea en el móvil y aparece en la app.
-3. Editar lo mismo en ambos lados no pierde datos silenciosamente: o gana el último cambio con aviso, o se muestra conflicto.
-4. Borrar en un lado no resucita la tarea desde el otro.
+**Aceptación:** compila, tests verdes, Google/Microsoft sin cambios de comportamiento.
+
+### A2 — Motor de sync ⬜
+
+- [ ] Registrar conexiones Radicale fuera del framework de cuentas de COSMIC
+- [ ] Pull con `sync-token`, push con `If-Match`
+- [ ] ETag en `RemoteTaskDraft` para que el update sea atómico
+- [ ] Resolución de conflictos (412)
+- [ ] Borrado remoto → papelera local
+
+**Aceptación:** crear en la app aparece en el móvil en < 5 s y viceversa; editar en ambos lados no pierde datos en silencio; borrar en un lado no resucita la tarea.
+
+### A3 — UI y credenciales ⬜
+
+- [ ] Pantalla de ajustes: URL, usuario, contraseña, "Probar conexión", selector de calendario
+- [ ] Contraseña en keyring del sistema (`secret-service`), nunca en `config.ron`
+- [ ] Estado de sync visible (última vez, errores)
+
+**Aceptación:** un usuario puede configurar su Radicale sin tocar archivos ni variables de entorno.
 
 ---
 

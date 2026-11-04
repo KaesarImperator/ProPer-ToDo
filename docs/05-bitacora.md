@@ -44,7 +44,9 @@ Formato: objetivo → hecho → decisiones → problemas → siguiente paso.
 
 ### Siguiente paso
 
-Fase A: integración en la app.
+**A1 — Fontanería del provider Radicale.** La fase A se partió en A1/A2/A3 para
+que cada sesión cierre limpia. Brief autosuficiente en `docs/fases/A1-fontaneria.md`:
+basta con decir "Arranca A1".
 
 ### Notas de entorno (costaron tiempo, documentadas en `03-radicale.md`)
 

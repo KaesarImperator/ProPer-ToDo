@@ -9,8 +9,21 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 | Fase | Descripción | Estado |
 |---|---|---|
 | **B** | Crate aislado `caldav-client` + tests | ✅ Completa — 12 unitarios + 4 integración, verificados contra Docker y contra el servidor real |
-| **A** | `RadicaleProvider` dentro de la app + sync | 🟡 Siguiente |
+| **A1** | Fontanería: dependencia, `TaskSource`, credenciales, provider | 🟡 **Siguiente** |
+| **A2** | Motor de sync con ETag | ⬜ Pendiente |
+| **A3** | UI de ajustes + keyring | ⬜ Pendiente |
 | **C** | Fixes upstream #164 y #115 | ⬜ Pendiente |
+
+## Cómo arrancar una fase
+
+El usuario dice **"Arranca A1"** (o A2, A3, C). El agente entonces:
+
+1. Lee `docs/fases/A1-fontaneria.md` — es autosuficiente, no hace falta explorar el repo.
+2. Lee `docs/00-estado-actual.md` para confirmar que no cambió nada desde entonces.
+3. Trabaja **solo** el alcance de esa fase. Lo que esté "fuera de alcance" en el brief no se toca.
+4. Al terminar: tests verdes → entrada en `docs/05-bitacora.md` → actualizar `00-estado-actual.md` y la tabla de arriba → commit → push.
+
+Si el brief no coincide con el código, **parar y anotarlo** en la bitácora en vez de improvisar.
 
 ## Mapa del repo
 
