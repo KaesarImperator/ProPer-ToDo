@@ -156,15 +156,25 @@ Si las variables no están definidas, los tests se saltan solos con un mensaje.
 
 ## 5. Servidor Radicale del usuario
 
-Pendiente de configurar. Cuando esté:
+Servidor real (LAN):
 
-```bash
-export RADICALE_URL=http://<host>:5232/<usuario>/<coleccion>/
-export RADICALE_USER=<usuario>
-export RADICALE_PASS=<contraseña>
+```
+http://192.168.0.35:5232/cesar/d6be8909-c122-e21e-91fd-304a1e7d2313/
 ```
 
-No commitear nunca estas credenciales. En la app irán al keyring del sistema.
+Requiere autenticación Basic (usuario `cesar`). La contraseña **no** se guarda
+en el repo: el usuario la deja en `~/.config/proper-todo/test.env` (permisos
+600, fuera del repositorio) y los tests la leen de ahí.
+
+```bash
+set -a; . ~/.config/proper-todo/test.env; set +a
+export RADICALE_URL=http://192.168.0.35:5232/cesar/d6be8909-c122-e21e-91fd-304a1e7d2313/
+cd caldav-client
+cargo test --test radicale -- --ignored --nocapture
+```
+
+Es un servidor de pruebas: los datos que creen los tests se limpian solos
+(prefijo `proper-todo-test-`), pero conviene revisar antes de usarlo en serio.
 
 ## 6. Push a GitHub (SSH)
 

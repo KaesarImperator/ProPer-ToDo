@@ -22,9 +22,11 @@ Formato: objetivo → hecho → decisiones → problemas → siguiente paso.
 - 12 tests unitarios en verde (`cargo test`).
 - Radicale 3.9 levantado en Docker y **4 tests de integración en verde**:
   descubrimiento, ciclo de vida completo (crear → listar → leer → actualizar con ETag → 412 con ETag obsoleto → borrar idempotente) y sync incremental.
+- **Verificado además contra el servidor real del usuario** (`http://192.168.0.35:5232/cesar/…`, calendario `R-Profesional`): 4/4 en verde, sin dejar tareas residuales.
 - Descubrimiento desde URL raíz verificado: cae a `/{usuario}/` cuando el servidor no resuelve `current-user-principal`.
 - `caldav-client/README.md` con ejemplo de uso y `examples/probe.rs` para sondeo manual.
 - Documentación de proyecto completa (`AGENTS.md` + `docs/`).
+- Push a GitHub funcionando; commit `7d11e41` publicado.
 
 ### Decisiones
 
@@ -37,9 +39,12 @@ Formato: objetivo → hecho → decisiones → problemas → siguiente paso.
 
 ### Problemas
 
-- La clave SSH `github_proper` no está autorizada en GitHub (`Permission denied (publickey)`). Push bloqueado.
-- Faltan 7 paquetes `-dev` para compilar libcosmic. Requiere sudo, pendiente.
-- Sin URL/credenciales del Radicale real del usuario: verificado solo contra Docker.
+- Push bloqueado temporalmente por errores `Internal Server Error` / `fatal error in commit_refs` de GitHub; resuelto reintentando (era transitorio).
+- Faltan 7 paquetes `-dev` para compilar libcosmic → **resuelto**: el usuario los instaló.
+
+### Siguiente paso
+
+Fase A: integración en la app.
 
 ### Notas de entorno (costaron tiempo, documentadas en `03-radicale.md`)
 

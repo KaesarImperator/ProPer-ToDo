@@ -26,7 +26,7 @@ Tres fases. **Una fase por sesión.** Cada fase tiene criterio de aceptación ex
 2. ✅ `cargo test -- --ignored` pasa contra Radicale: crear → listar → leer → actualizar con ETag → detectar conflicto (412) → borrar → borrar otra vez (idempotente).
 3. ✅ El payload generado lo acepta Radicale sin normalizaciones raras (round-trip verificado).
 
-**Pendiente de la fase:** probar contra el servidor Radicale real del usuario, no solo el de Docker.
+**Pendiente de la fase:** nada. Verificado contra Radicale 3.9 en Docker **y** contra el servidor real del usuario (`R-Profesional`), 4/4 tests en verde en ambos.
 
 ---
 

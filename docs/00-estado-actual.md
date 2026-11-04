@@ -27,10 +27,14 @@ Nada. **Fase B cerrada.** Siguiente: fase A (integración en la app).
 
 ## Pendiente inmediato
 
-1. Autorizar la clave SSH en GitHub y hacer el primer push.
-2. Instalar dependencias de sistema para libcosmic (requiere sudo).
-3. Obtener URL + credenciales del Radicale real del usuario y repetir el test de integración.
-4. Empezar la fase A: dependencia `path`, `TaskSource::Radicale`, refactor de credenciales.
+1. Obtener la contraseña de `cesar` (vía `~/.config/proper-todo/test.env`) y repetir los tests de integración contra el servidor real.
+2. Validar que la app compila en esta máquina (build en curso).
+3. Empezar la fase A: dependencia `path`, `TaskSource::Radicale`, refactor de credenciales.
+
+## Resuelto
+
+- ✅ Push a GitHub funcionando (SSH). Commit `7d11e41` publicado.
+- ✅ Dependencias de sistema de libcosmic instaladas.
 
 ## Decisiones ya tomadas
 

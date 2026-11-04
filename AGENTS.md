@@ -8,8 +8,8 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 | Fase | Descripción | Estado |
 |---|---|---|
-| **B** | Crate aislado `caldav-client` + tests | ✅ Completa — 12 unitarios + 4 integración contra Radicale 3.9 |
-| **A** | `RadicaleProvider` dentro de la app + sync | ⬜ Pendiente |
+| **B** | Crate aislado `caldav-client` + tests | ✅ Completa — 12 unitarios + 4 integración, verificados contra Docker y contra el servidor real |
+| **A** | `RadicaleProvider` dentro de la app + sync | 🟡 Siguiente |
 | **C** | Fixes upstream #164 y #115 | ⬜ Pendiente |
 
 ## Mapa del repo
@@ -46,6 +46,9 @@ cargo build
 
 ## Bloqueos conocidos
 
-- La clave SSH `~/.ssh/github_proper` aún no está autorizada en GitHub → no se puede hacer push (ver `docs/03-radicale.md` §Push).
-- Faltan paquetes de sistema para compilar libcosmic (`libxkbcommon-dev`, `libwayland-dev`, `libudev-dev`, `libdbus-1-dev`, `libssl-dev`, `libfontconfig-dev`, `libfreetype-dev`).
-- No hay URL ni credenciales del Radicale del usuario todavía → el test de integración se salta solo.
+Ninguno. El entorno está completo: Rust, dependencias de libcosmic, Docker y acceso SSH a GitHub.
+
+## Credenciales de prueba
+
+El servidor Radicale real y su contraseña viven en `~/.config/proper-todo/test.env`
+(fuera del repo). Ver `docs/03-radicale.md` §5. Nunca commitear ese archivo.
