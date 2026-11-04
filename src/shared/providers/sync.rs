@@ -15,7 +15,7 @@ use crate::shared::store::Store;
 use super::google::GoogleTasksProvider;
 use super::microsoft::MicrosoftTodoProvider;
 use super::model::RemoteTaskDraft;
-use super::provider::{ProviderError, RemoteTaskProvider};
+use super::provider::{ProviderCredentials, ProviderError, RemoteTaskProvider};
 
 #[derive(Clone, Debug)]
 pub enum SyncStatus {
@@ -116,7 +116,9 @@ pub async fn run_sync(
             }
         };
 
-        match sync_account(&store, provider.as_ref(), &account, &token).await {
+        let credentials = ProviderCredentials::Bearer(token);
+
+        match sync_account(&store, provider.as_ref(), &account, &credentials).await {
             Ok(account_report) => {
                 report.lists_pulled += account_report.lists_pulled;
                 report.tasks_pulled += account_report.tasks_pulled;
@@ -170,6 +172,10 @@ fn make_source(provider_id: &str, account_id: Uuid, remote_id: String) -> TaskSo
             account_id,
             remote_id,
         },
+        "radicale" => TaskSource::Radicale {
+            account_id,
+            remote_id,
+        },
         _ => TaskSource::Microsoft {
             account_id,
             remote_id,
@@ -185,6 +191,9 @@ fn provider_for(id: &str) -> Option<Box<dyn RemoteTaskProvider>> {
     match id {
         "google" => Some(Box::new(GoogleTasksProvider::default())),
         "microsoft" => Some(Box::new(MicrosoftTodoProvider::default())),
+        // A2: las conexiones Radicale no son cuentas de COSMIC; se registrarán
+        // aparte y se inyectarán aquí con sus credenciales.
+        "radicale" => None,
         _ => None,
     }
 }
@@ -193,11 +202,11 @@ async fn sync_account(
     store: &Store,
     provider: &dyn RemoteTaskProvider,
     account: &Account,
-    token: &str,
+    credentials: &ProviderCredentials,
 ) -> Result<SyncReport, ProviderError> {
     let mut report = SyncReport::default();
 
-    let remote_lists = provider.list_lists(token).await?;
+    let remote_lists = provider.list_lists(credentials).await?;
     let local_lists = store.lists().load_all().unwrap_or_default();
 
     // Pull: new/renamed remote lists, and detect remote deletions.
@@ -236,7 +245,7 @@ async fn sync_account(
             store,
             provider,
             account,
-            token,
+            credentials,
             list_id,
             &remote_list.remote_id,
         )
@@ -279,14 +288,14 @@ async fn sync_list_tasks(
     store: &Store,
     provider: &dyn RemoteTaskProvider,
     account: &Account,
-    token: &str,
+    credentials: &ProviderCredentials,
     list_id: Uuid,
     list_remote_id: &str,
 ) -> Result<SyncReport, ProviderError> {
     let mut report = SyncReport::default();
     let task_store = store.tasks(list_id);
 
-    let remote_tasks = provider.list_tasks(token, list_remote_id).await?;
+    let remote_tasks = provider.list_tasks(credentials, list_remote_id).await?;
     let local_tasks = task_store.load_all().unwrap_or_default();
 
     let now = Timestamp::now();
@@ -305,9 +314,10 @@ async fn sync_list_tasks(
                     notes: local.notes.clone(),
                     due_date: local.due_date,
                     completed: local.is_completed(),
+                    ..Default::default()
                 };
                 if let Err(err) = provider
-                    .update_task(token, list_remote_id, &remote.remote_id, &draft)
+                    .update_task(credentials, list_remote_id, &remote.remote_id, &draft)
                     .await
                 {
                     report
@@ -366,8 +376,12 @@ async fn sync_list_tasks(
             notes: local.notes.clone(),
             due_date: local.due_date,
             completed: local.is_completed(),
+            ..Default::default()
         };
-        match provider.create_task(token, list_remote_id, &draft).await {
+        match provider
+            .create_task(credentials, list_remote_id, &draft)
+            .await
+        {
             Ok(created) => {
                 let mut updated = local.clone();
                 updated.source = make_source(&account.provider, account.id, created.remote_id);

@@ -61,6 +61,65 @@ Fase A: integración en la app (requiere resolver antes el sudo para libcosmic).
 
 ---
 
+## Sesión 2 — 2026-11-04 (A1: fontanería del provider)
+
+**Objetivo:** dejar la app preparada para hablar CalDAV (dependencia, origen,
+credenciales y provider) sin tocar UI ni motor de sincronización.
+
+### Hecho
+
+- `Cargo.toml`: `caldav-client` entra como dependencia `path`.
+- `TaskSource::Radicale { account_id, remote_id }` en `src/shared/store/source.rs`;
+  `remote_id` es el **href** del recurso, no el UID. Añadido a los dos `match`
+  (`account_id()`, `remote_id()`) y a los exhaustivos de `nav.rs` (icono de nube)
+  y `sync.rs::make_source` (`"radicale"`).
+- `ProviderCredentials::{Bearer, Basic}` en `provider.rs`; las 9 firmas del trait
+  pasan de `token: &str` a `credentials: &ProviderCredentials`. Google y
+  Microsoft devuelven `UnsupportedCredentials` si no reciben un Bearer; su
+  comportamiento con Bearer no cambia.
+- `ProviderError`: nuevas variantes `UnsupportedCredentials`, `Unsupported` y
+  `CalDav(#[from] caldav_client::CalDavError)`.
+- `RemoteTask`/`RemoteTaskDraft`: `priority`, `tags`, `percent_complete`,
+  `parent_remote_id`, `recurrence`, con `Default` derivado. Google/Microsoft los
+  dejan por defecto; los dos literales de `sync.rs` usan `..Default::default()`,
+  así que el motor no cambia.
+- `src/shared/providers/radicale.rs`: `RadicaleProvider` sobre `CalDavClient`
+  (construido por conexión, no por llamada), con el mapeo `Vtodo` ↔ `RemoteTask`
+  del brief. `create_list`/`update_list`/`delete_list` → `Unsupported`.
+- `provider_for("radicale")` → `None` con el TODO de A2 (no son cuentas de COSMIC).
+- **Tests:** 9 en la app (5 previos + 4 nuevos del mapeo) y 12 en `caldav-client`,
+  todos en verde. `cargo build` compila; queda **un** warning, el preexistente de
+  `src/features/trash/trash.rs:55` (`RequestEmptyTrash`), ajeno a esta fase.
+
+### Decisiones
+
+1. **`ProviderError::CalDav`** además de las dos variantes que pedía el brief: sin
+   ella habría que mapear errores de iCalendar/XML a `Api { status: 0 }` y se
+   perdería el motivo real. Es un añadido mínimo, no un cambio de alcance.
+2. **`#[allow(dead_code)]`** en `ProviderCredentials::Basic` y en `RadicaleProvider`:
+   en A1 nada los construye todavía; evita warnings nuevos sin fingir uso.
+3. **`PRIORITY:0` → `None`** al leer (RFC 5545 lo define como "sin prioridad") y
+   se omite al escribir.
+4. **`apply_draft` mantiene `COMPLETED` coherente**: lo sella al completar y lo
+   borra al reabrir, para no dejar una tarea "no completada" con fecha de fin.
+5. **`delete_task` idempotente**: un `404` en el `GET` previo del ETag se trata
+   como éxito, igual que `CalDavClient::delete_vtodo`.
+
+### Problemas y limitaciones conocidas
+
+- `update_task` hace GET+PUT (el trait no transporta ETag) y `put_vtodo` deriva el
+  href del UID: un VTODO creado por otro cliente con otro nombre de fichero se
+  escribiría en un href nuevo. A2 pasa el href y el ETag en el draft.
+- Sin tests de red en esta fase: el mapeo es puro y se prueba sin servidor; la
+  integración real ya está cubierta por `caldav-client/tests/radicale.rs`.
+
+### Siguiente paso
+
+**A2 — Motor de sync:** registrar las conexiones Radicale fuera del framework de
+cuentas, pull con `sync-token`, push con `If-Match` y ETag en el draft.
+
+---
+
 ## Plantilla para la próxima entrada
 
 ```md

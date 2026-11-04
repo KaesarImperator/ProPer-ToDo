@@ -34,18 +34,18 @@ Tres fases. **Una fase por sesión.** Cada fase tiene criterio de aceptación ex
 
 Partida en tres sub-fases para que cada sesión cierre limpia. Briefs detallados en `docs/fases/`.
 
-### A1 — Fontanería 🟡 siguiente
+### A1 — Fontanería ✅
 
 Brief: **[`fases/A1-fontaneria.md`](fases/A1-fontaneria.md)**
 
-- [ ] Dependencia `path` a `caldav-client`
-- [ ] `TaskSource::Radicale { account_id, remote_id }`
-- [ ] `ProviderCredentials` (Bearer / Basic) y refactor del trait
-- [ ] Campos nuevos en `RemoteTask`/`RemoteTaskDraft`
-- [ ] `src/shared/providers/radicale.rs` + mapeo `Vtodo` ↔ `RemoteTask`
-- [ ] Tests unitarios del mapeo
+- [x] Dependencia `path` a `caldav-client`
+- [x] `TaskSource::Radicale { account_id, remote_id }`
+- [x] `ProviderCredentials` (Bearer / Basic) y refactor del trait
+- [x] Campos nuevos en `RemoteTask`/`RemoteTaskDraft`
+- [x] `src/shared/providers/radicale.rs` + mapeo `Vtodo` ↔ `RemoteTask`
+- [x] Tests unitarios del mapeo (4)
 
-**Aceptación:** compila, tests verdes, Google/Microsoft sin cambios de comportamiento.
+**Aceptación:** ✅ compila, tests verdes (9 en la app, 12 en `caldav-client`), Google/Microsoft sin cambios de comportamiento.
 
 ### A2 — Motor de sync ⬜
 

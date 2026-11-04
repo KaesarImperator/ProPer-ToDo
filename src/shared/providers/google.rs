@@ -2,7 +2,7 @@ use jiff::{civil::Date, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use super::model::{RemoteList, RemoteTask, RemoteTaskDraft};
-use super::provider::{ProviderError, ProviderResult, RemoteTaskProvider};
+use super::provider::{ProviderCredentials, ProviderError, ProviderResult, RemoteTaskProvider};
 
 const BASE_URL: &str = "https://tasks.googleapis.com/tasks/v1";
 
@@ -82,6 +82,8 @@ impl From<GoogleTask> for RemoteTask {
             due_date: value.due.as_deref().and_then(parse_google_date),
             completed: value.status.as_deref() == Some("completed"),
             updated_at: value.updated.as_deref().and_then(parse_google_updated),
+            // Google Tasks has no priority/categories/percent/parent/rrule.
+            ..Default::default()
         }
     }
 }
@@ -126,7 +128,14 @@ impl RemoteTaskProvider for GoogleTasksProvider {
         "google"
     }
 
-    async fn create_list(&self, token: &str, name: &str) -> ProviderResult<RemoteList> {
+    async fn create_list(
+        &self,
+        credentials: &ProviderCredentials,
+        name: &str,
+    ) -> ProviderResult<RemoteList> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .post(format!("{BASE_URL}/users/@me/lists"))
@@ -141,10 +150,13 @@ impl RemoteTaskProvider for GoogleTasksProvider {
 
     async fn create_task(
         &self,
-        token: &str,
+        credentials: &ProviderCredentials,
         list_remote_id: &str,
         task: &RemoteTaskDraft,
     ) -> ProviderResult<RemoteTask> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .post(format!("{BASE_URL}/lists/{list_remote_id}/tasks"))
@@ -157,7 +169,14 @@ impl RemoteTaskProvider for GoogleTasksProvider {
         Ok(body.into())
     }
 
-    async fn delete_list(&self, token: &str, remote_id: &str) -> ProviderResult<()> {
+    async fn delete_list(
+        &self,
+        credentials: &ProviderCredentials,
+        remote_id: &str,
+    ) -> ProviderResult<()> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .delete(format!("{BASE_URL}/users/@me/lists/{remote_id}"))
@@ -170,10 +189,13 @@ impl RemoteTaskProvider for GoogleTasksProvider {
 
     async fn delete_task(
         &self,
-        token: &str,
+        credentials: &ProviderCredentials,
         list_remote_id: &str,
         remote_id: &str,
     ) -> ProviderResult<()> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .delete(format!(
@@ -186,7 +208,13 @@ impl RemoteTaskProvider for GoogleTasksProvider {
         Ok(())
     }
 
-    async fn list_lists(&self, token: &str) -> ProviderResult<Vec<RemoteList>> {
+    async fn list_lists(
+        &self,
+        credentials: &ProviderCredentials,
+    ) -> ProviderResult<Vec<RemoteList>> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .get(format!("{BASE_URL}/users/@me/lists"))
@@ -200,9 +228,12 @@ impl RemoteTaskProvider for GoogleTasksProvider {
 
     async fn list_tasks(
         &self,
-        token: &str,
+        credentials: &ProviderCredentials,
         list_remote_id: &str,
     ) -> ProviderResult<Vec<RemoteTask>> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .get(format!("{BASE_URL}/lists/{list_remote_id}/tasks"))
@@ -215,7 +246,15 @@ impl RemoteTaskProvider for GoogleTasksProvider {
         Ok(body.items.into_iter().map(Into::into).collect())
     }
 
-    async fn update_list(&self, token: &str, remote_id: &str, name: &str) -> ProviderResult<()> {
+    async fn update_list(
+        &self,
+        credentials: &ProviderCredentials,
+        remote_id: &str,
+        name: &str,
+    ) -> ProviderResult<()> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .patch(format!("{BASE_URL}/users/@me/lists/{remote_id}"))
@@ -229,11 +268,14 @@ impl RemoteTaskProvider for GoogleTasksProvider {
 
     async fn update_task(
         &self,
-        token: &str,
+        credentials: &ProviderCredentials,
         list_remote_id: &str,
         remote_id: &str,
         task: &RemoteTaskDraft,
     ) -> ProviderResult<()> {
+        let ProviderCredentials::Bearer(token) = credentials else {
+            return Err(ProviderError::UnsupportedCredentials);
+        };
         let response = self
             .client
             .patch(format!(
@@ -262,6 +304,8 @@ mod tests {
         assert!(!remote.completed);
         assert_eq!(remote.due_date, Some("2026-08-01".parse().unwrap()));
         assert!(remote.updated_at.is_some());
+        assert_eq!(remote.priority, None);
+        assert!(remote.tags.is_empty());
     }
 
     #[test]

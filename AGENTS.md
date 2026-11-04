@@ -9,8 +9,8 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 | Fase | Descripción | Estado |
 |---|---|---|
 | **B** | Crate aislado `caldav-client` + tests | ✅ Completa — 12 unitarios + 4 integración, verificados contra Docker y contra el servidor real |
-| **A1** | Fontanería: dependencia, `TaskSource`, credenciales, provider | 🟡 **Siguiente** |
-| **A2** | Motor de sync con ETag | ⬜ Pendiente |
+| **A1** | Fontanería: dependencia, `TaskSource`, credenciales, provider | ✅ Completa — `crate` como dependencia, `TaskSource::Radicale`, `ProviderCredentials`, `providers/radicale.rs` + 4 tests |
+| **A2** | Motor de sync con ETag | 🟡 **Siguiente** |
 | **A3** | UI de ajustes + keyring | ⬜ Pendiente |
 | **C** | Fixes upstream #164 y #115 | ⬜ Pendiente |
 

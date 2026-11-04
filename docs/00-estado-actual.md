@@ -20,16 +20,20 @@ Base elegida: fork de `cosmic-utils/cosmic-ext-tasks` (Rust + libcosmic, GPL-3.0
   - `client.rs` — descubrimiento, CRUD con ETag, `sync-collection`
   - **12 tests unitarios en verde**
 - Análisis de las 14 issues abiertas de upstream (ver `04-issues-upstream.md`).
+- **A1 cerrada (2026-11-04):** `caldav-client` como dependencia `path`,
+  `TaskSource::Radicale`, `ProviderCredentials` (Bearer/Basic) en el trait,
+  campos CalDAV en `RemoteTask`/`RemoteTaskDraft` y `providers/radicale.rs` con
+  el mapeo `Vtodo` ↔ `RemoteTask`. 4 tests nuevos del mapeo; el motor de sync y
+  la UI siguen intactos.
 
 ## En curso
 
-**A1 — Fontanería del provider Radicale.** Brief autosuficiente en
-`docs/fases/A1-fontaneria.md`. Arranca con la frase **"Arranca A1"**.
+Nada. A1 cerrada el 2026-11-04; la siguiente sesión arranca con **"Arranca A2"**.
 
 ## Pendiente inmediato
 
-1. Ejecutar A1 según su brief.
-2. Después: A2 (motor de sync) y A3 (UI + keyring).
+1. A2 (motor de sync) según `docs/fases/` — pendiente de escribir el brief.
+2. Después: A3 (UI + keyring).
 
 ## Resuelto
 

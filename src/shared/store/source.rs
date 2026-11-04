@@ -17,6 +17,16 @@ pub enum TaskSource {
         account_id: Uuid,
         remote_id: String,
     },
+    /// Mirrored from a CalDAV server (Radicale). There is no COSMIC account
+    /// behind it yet, but the same shape is kept so the sync engine and the
+    /// trash/orphan logic treat it like any other remote source.
+    /// `remote_id` is the resource href (`/user/calendar/task.ics`), not the
+    /// UID: it is the only stable identifier that can be used directly in a
+    /// `GET`/`PUT`/`DELETE`.
+    Radicale {
+        account_id: Uuid,
+        remote_id: String,
+    },
 }
 
 impl TaskSource {
@@ -27,18 +37,18 @@ impl TaskSource {
     pub fn account_id(&self) -> Option<Uuid> {
         match self {
             TaskSource::Local => None,
-            TaskSource::Google { account_id, .. } | TaskSource::Microsoft { account_id, .. } => {
-                Some(*account_id)
-            }
+            TaskSource::Google { account_id, .. }
+            | TaskSource::Microsoft { account_id, .. }
+            | TaskSource::Radicale { account_id, .. } => Some(*account_id),
         }
     }
 
     pub fn remote_id(&self) -> Option<&str> {
         match self {
             TaskSource::Local => None,
-            TaskSource::Google { remote_id, .. } | TaskSource::Microsoft { remote_id, .. } => {
-                Some(remote_id.as_str())
-            }
+            TaskSource::Google { remote_id, .. }
+            | TaskSource::Microsoft { remote_id, .. }
+            | TaskSource::Radicale { remote_id, .. } => Some(remote_id.as_str()),
         }
     }
 }
