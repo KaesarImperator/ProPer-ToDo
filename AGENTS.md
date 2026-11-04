@@ -18,7 +18,7 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 El usuario dice **"Arranca A1"** (o A2, A3, C). El agente entonces:
 
-1. Lee `docs/fases/A1-fontaneria.md` — es autosuficiente, no hace falta explorar el repo.
+1. Lee `docs/fases/<FASE>-*.md` (p. ej. `A1-fontaneria.md`) — es autosuficiente, no hace falta explorar el repo.
 2. Lee `docs/00-estado-actual.md` para confirmar que no cambió nada desde entonces.
 3. Trabaja **solo** el alcance de esa fase. Lo que esté "fuera de alcance" en el brief no se toca.
 4. Al terminar: tests verdes → entrada en `docs/05-bitacora.md` → actualizar `00-estado-actual.md` y la tabla de arriba → commit → push.
@@ -36,7 +36,7 @@ Si el brief no coincide con el código, **parar y anotarlo** en la bitácora en 
 └── Cargo.toml            # crate de la app (NO es workspace)
 ```
 
-`caldav-client/` es un crate independiente. No está en un workspace con la app todavía; en la fase A se añadirá como dependencia `path`.
+`caldav-client/` es un crate independiente. Sigue sin formar workspace con la app; desde A1 entra como dependencia `path` en `Cargo.toml` (con su propio `target/` y `Cargo.lock` implícito, por eso `cargo test` ahí sigue siendo de segundos).
 
 ## Construir y probar
 

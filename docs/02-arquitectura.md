@@ -12,7 +12,7 @@
 │              RemoteTaskProvider          │
 │              ├── google.rs               │
 │              ├── microsoft.rs            │
-│              └── radicale.rs  ◄── nuevo  │
+│              └── radicale.rs  ◄── A1     │
 └────────────────────┬─────────────────────┘
                      │
         ┌────────────▼─────────────┐
@@ -61,9 +61,11 @@ Regla: **nunca borrar propiedades desconocidas**. `Vtodo.extra` las conserva par
 
 ## Autenticación
 
-El trait actual recibe `token: &str` porque Google y Microsoft usan OAuth Bearer. Radicale usa **HTTP Basic**.
-
-**Decisión:** en la fase A se cambia la firma del trait a un enum:
+`RemoteTaskProvider` recibe `credentials: &ProviderCredentials` (cambio hecho en
+A1). Google y Microsoft exigen `Bearer` y devuelven `UnsupportedCredentials` con
+cualquier otra variante; `sync.rs` envuelve el token OAuth en
+`ProviderCredentials::Bearer` antes de llamar. Radicale usa **HTTP Basic** y su
+`CalDavClient` se construye una vez por conexión, no por llamada.
 
 ```rust
 pub enum ProviderCredentials {

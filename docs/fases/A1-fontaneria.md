@@ -1,5 +1,10 @@
 # A1 — Fontanería del provider Radicale
 
+> **Estado: ✅ ejecutada el 2026-11-04** (commit `04b3c8c`). Ver
+> `docs/05-bitacora.md` §Sesión 2 para lo hecho, las decisiones y las
+> limitaciones que quedan para A2. Este documento se conserva como brief
+> histórico; no volver a ejecutarlo.
+
 > **Para el agente:** este documento es autosuficiente. No hace falta explorar
 > el repo antes de empezar; los archivos y firmas exactas están aquí. Si algo
 > no coincide con el código, para y anótalo en `docs/05-bitacora.md`.

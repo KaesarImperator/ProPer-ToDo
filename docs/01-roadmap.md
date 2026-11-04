@@ -10,7 +10,7 @@ Tres fases. **Una fase por sesión.** Cada fase tiene criterio de aceptación ex
 
 ### Tareas
 
-- [x] Estructura del crate `caldav-client/` (sin workspace, dependencia `path` futura)
+- [x] Estructura del crate `caldav-client/` (sin workspace; dependencia `path` de la app desde A1)
 - [x] `ical.rs`: unfold RFC 5545, parseo de propiedades y parámetros, escape/unescape, folding a 75 octetos
 - [x] `vtodo.rs`: struct `Vtodo`, parseo y serialización, preservación de propiedades desconocidas
 - [x] `xml.rs`: cuerpos PROPFIND/REPORT + parseo de `multistatus` (incluye borrados de `sync-collection`)
