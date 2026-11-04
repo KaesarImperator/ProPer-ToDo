@@ -47,15 +47,21 @@ Brief: **[`fases/A1-fontaneria.md`](fases/A1-fontaneria.md)**
 
 **Aceptación:** ✅ compila, tests verdes (9 en la app, 12 en `caldav-client`), Google/Microsoft sin cambios de comportamiento.
 
-### A2 — Motor de sync ⬜
+### A2 — Motor de sync 🟡 siguiente
 
-- [ ] Registrar conexiones Radicale fuera del framework de cuentas de COSMIC
-- [ ] Pull con `sync-token`, push con `If-Match`
-- [ ] ETag en `RemoteTaskDraft` para que el update sea atómico
-- [ ] Resolución de conflictos (412)
+Brief: **[`fases/A2-sync.md`](fases/A2-sync.md)**
+
+- [ ] `RadicaleConnection` en `AppConfig` (contraseña por entorno, keyring en A3)
+- [ ] `List::sync_token`
+- [ ] `put_vtodo_at` + `etag` en `RemoteTask`/`RemoteTaskDraft`
+- [ ] `sync_changes`/`get_task` en el trait, con default para Google/Microsoft
+- [ ] `run_radicale_sync` reutilizando `sync_list_tasks` vía `SyncTarget`
+- [ ] Pull incremental con `sync-token`
+- [ ] Resolución de conflictos (412) con reintento único
 - [ ] Borrado remoto → papelera local
+- [ ] `draft_from_task` completo (prioridad, etiquetas, recurrencia)
 
-**Aceptación:** crear en la app aparece en el móvil en < 5 s y viceversa; editar en ambos lados no pierde datos en silencio; borrar en un lado no resucita la tarea.
+**Aceptación:** crear en la app aparece en el móvil en < 5 s y viceversa; editar en ambos lados no pierde datos en silencio; borrar en un lado no resucita la tarea; el segundo sync sin cambios no reescribe nada.
 
 ### A3 — UI y credenciales ⬜
 

@@ -28,11 +28,12 @@ Base elegida: fork de `cosmic-utils/cosmic-ext-tasks` (Rust + libcosmic, GPL-3.0
 
 ## En curso
 
-Nada. A1 cerrada el 2026-11-04; la siguiente sesión arranca con **"Arranca A2"**.
+Nada. A1 cerrada el 2026-11-04; el brief de A2 ya está escrito.
+La siguiente sesión arranca con **"Arranca A2"**.
 
 ## Pendiente inmediato
 
-1. A2 (motor de sync) según `docs/fases/` — pendiente de escribir el brief.
+1. A2 (motor de sync) según `docs/fases/A2-sync.md`.
 2. Después: A3 (UI + keyring).
 
 ## Resuelto
