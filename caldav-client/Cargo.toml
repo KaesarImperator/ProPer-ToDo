@@ -1,0 +1,18 @@
+[package]
+name = "caldav-client"
+version = "0.1.0"
+edition = "2021"
+license = "GPL-3.0-or-later"
+description = "Minimal CalDAV/VTODO client aimed at Radicale-compatible servers"
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls"] }
+tokio = { version = "1", features = ["rt", "macros"] }
+thiserror = "2"
+url = "2"
+roxmltree = "0.20"
+jiff = { version = "0.2", features = ["serde"] }
+tracing = "0.1"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
