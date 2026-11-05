@@ -60,6 +60,8 @@ pub struct AppModel {
     pub(crate) accounts_loaded_once: bool,
     pub(crate) remote_accounts: Vec<Account>,
     pub(crate) sync_status: Option<crate::shared::providers::sync::SyncStatus>,
+    /// The pass in flight was started by the user (button), not by the tick.
+    pub(crate) sync_manual: bool,
 
     /// Provider capability list from `AccountsClient::list_providers()`,
     /// carrying each provider's declared icon (URL / path / theme name).

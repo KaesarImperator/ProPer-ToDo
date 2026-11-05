@@ -57,6 +57,7 @@ impl AppModel {
             trash: Trash::new(flags.store.clone()),
             trash_entity: widget::segmented_button::Entity::default(),
             sync_status: None,
+            sync_manual: false,
         };
 
         let mut tasks = vec![

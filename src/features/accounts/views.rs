@@ -83,29 +83,7 @@ pub fn page(app: &AppModel) -> Element<'_, Message> {
         ));
     }
 
-    let (label, syncing) = match &app.sync_status {
-        Some(crate::shared::providers::sync::SyncStatus::Syncing) => (fl!("syncing"), true),
-        Some(crate::shared::providers::sync::SyncStatus::Idle { at, had_errors }) => {
-            let base = if *had_errors {
-                fl!("sync-error")
-            } else {
-                fl!("last-synced")
-            };
-            (
-                format!(
-                    "{base} ({})",
-                    crate::features::tasks::task::Task::format_timestamp(at)
-                ),
-                false,
-            )
-        }
-        None => (String::new(), false),
-    };
-    section = section.add(widget::settings::item::item(
-        label,
-        widget::button::standard(fl!("sync"))
-            .on_press_maybe((!syncing).then_some(Message::Accounts(AccountsAction::SyncNow))),
-    ));
+    section = section.add(sync_row(app));
 
     widget::scrollable(section).into()
 }
@@ -123,4 +101,46 @@ fn todo_accounts(app: &AppModel) -> Vec<&accounts::models::Account> {
                 .unwrap_or(false)
         })
         .collect()
+}
+
+/// "Last synced / Sync now" row, shared by every page that can trigger a
+/// sync (accounts and CalDAV). Shows the last error under the button so the
+/// user never has to read logs, and the count of informational notices.
+pub fn sync_row(app: &AppModel) -> Element<'_, Message> {
+    use crate::shared::providers::sync::SyncStatus;
+
+    let (label, syncing, detail) = match &app.sync_status {
+        Some(SyncStatus::Syncing) => (fl!("syncing"), true, None),
+        Some(SyncStatus::Idle {
+            at,
+            had_errors,
+            warnings,
+            last_error,
+        }) => {
+            let base = if *had_errors {
+                fl!("sync-error")
+            } else {
+                fl!("last-synced")
+            };
+            let mut text = format!(
+                "{base} ({})",
+                crate::features::tasks::task::Task::format_timestamp(at)
+            );
+            if *warnings > 0 {
+                text = format!("{text} · {}", fl!("sync-notices", count = (*warnings as i64)));
+            }
+            (text, false, last_error.clone())
+        }
+        None => (String::new(), false, None),
+    };
+
+    let mut column = widget::column::with_capacity(2).push(widget::settings::item::item(
+        label,
+        widget::button::standard(fl!("sync"))
+            .on_press_maybe((!syncing).then_some(Message::Accounts(AccountsAction::SyncNow))),
+    ));
+    if let Some(detail) = detail {
+        column = column.push(widget::text::caption(detail));
+    }
+    column.spacing(4).into()
 }

@@ -21,7 +21,14 @@ use super::radicale::RadicaleProvider;
 #[derive(Clone, Debug)]
 pub enum SyncStatus {
     Syncing,
-    Idle { at: Timestamp, had_errors: bool },
+    Idle {
+        at: Timestamp,
+        had_errors: bool,
+        /// Informational notices of the last pass (resolved conflicts, ...).
+        warnings: usize,
+        /// First error of the last pass, so the user can read it without logs.
+        last_error: Option<String>,
+    },
 }
 
 #[derive(Clone, Debug, Default)]
@@ -174,6 +181,24 @@ pub async fn run_sync(
     }
 
     report
+}
+
+/// Whether the background sync tick should run. It must not depend on the
+/// COSMIC accounts daemon: a user with only CalDAV connections still expects
+/// their tasks to sync by themselves.
+pub fn periodic_sync_enabled(remote_accounts: usize, caldav_connections: usize) -> bool {
+    remote_accounts > 0 || caldav_connections > 0
+}
+
+/// Shortens an error to fit a status line (character-safe).
+pub fn truncate_for_status(message: &str, max_chars: usize) -> String {
+    let mut chars = message.chars();
+    let head: String = chars.by_ref().take(max_chars).collect();
+    if chars.next().is_some() {
+        format!("{head}…")
+    } else {
+        head
+    }
 }
 
 /// Name of the environment variable that overrides the keyring. Meant for
@@ -1146,6 +1171,20 @@ mod tests {
         assert!(report.had_errors());
         assert_eq!(report.warnings.len(), 2);
         assert_eq!(report.errors.len(), 1);
+    }
+
+    #[test]
+    fn periodic_sync_runs_for_caldav_without_daemon_accounts() {
+        assert!(!periodic_sync_enabled(0, 0));
+        assert!(periodic_sync_enabled(2, 0));
+        assert!(periodic_sync_enabled(0, 1));
+        assert!(periodic_sync_enabled(1, 1));
+    }
+
+    #[test]
+    fn status_line_truncation_is_char_safe() {
+        assert_eq!(truncate_for_status("corto", 10), "corto");
+        assert_eq!(truncate_for_status("ñandú largo", 5), "ñandú…");
     }
 
     #[test]

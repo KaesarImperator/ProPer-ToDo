@@ -24,6 +24,9 @@ pub enum AccountsAction {
     /// the account's Todo capability, which is managed by the Accounts app.
     SetLocallyEnabled(Uuid, bool),
     SyncFinished(SyncReport),
-    /// Manual "Sync now" or a periodic tick.
+    /// Manual "Sync now" (button): failures are surfaced with a toast.
     SyncNow,
+    /// Periodic background pass: same work, but failures stay quiet (the
+    /// status line and the log still record them).
+    SyncTick,
 }

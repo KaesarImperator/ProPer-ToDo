@@ -172,3 +172,8 @@ sync-error = Sync error
 sync-conflict-resolved = Kept the newer version of "{$title}"
 reconnect-account = Reconnect your account to keep syncing
 open = Open
+sync-notices = { $count ->
+    [one] 1 notice
+   *[other] { $count } notices
+}
+sync-failed = Sync failed: { $error }

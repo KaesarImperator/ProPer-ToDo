@@ -166,13 +166,34 @@ impl AppModel {
                 for warning in &report.warnings {
                     tracing::warn!("sync: {warning}");
                 }
+                let manual = std::mem::take(&mut self.sync_manual);
+                let first_error = report
+                    .errors
+                    .first()
+                    .map(|err| crate::shared::providers::sync::truncate_for_status(err, 160));
                 self.sync_status = Some(crate::shared::providers::sync::SyncStatus::Idle {
                     at: jiff::Timestamp::now(),
                     had_errors: report.had_errors(),
+                    warnings: report.warnings.len(),
+                    last_error: first_error.clone(),
                 });
                 let mut tasks = vec![cosmic::task::message(Message::Tasks(
                     crate::shared::navigation::nav::TasksAction::SyncFromDisk,
                 ))];
+                // Only a pass the user asked for gets a toast; the 5-minute
+                // background tick would otherwise nag on every flaky network.
+                if manual && !needs_reconnect {
+                    if let Some(error) = first_error {
+                        tasks.push(
+                            self.toasts
+                                .push(cosmic::widget::Toast::new(crate::fl!(
+                                    "sync-failed",
+                                    error = error
+                                )))
+                                .map(cosmic::Action::App),
+                        );
+                    }
+                }
                 if needs_reconnect {
                     tasks.push(
                         self.toasts
@@ -182,7 +203,14 @@ impl AppModel {
                 }
                 return app::Task::batch(tasks);
             }
-            AccountsAction::SyncNow => {
+            AccountsAction::SyncNow | AccountsAction::SyncTick => {
+                if matches!(
+                    self.sync_status,
+                    Some(crate::shared::providers::sync::SyncStatus::Syncing)
+                ) {
+                    return app::Task::none(); // a pass is already running
+                }
+                self.sync_manual = matches!(action, AccountsAction::SyncNow);
                 self.sync_status = Some(crate::shared::providers::sync::SyncStatus::Syncing);
                 let store = self.store.clone();
                 let disabled = self.config.disabled_accounts.clone();

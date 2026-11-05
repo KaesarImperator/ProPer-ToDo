@@ -254,14 +254,19 @@ impl Application for AppModel {
 
         if self.accounts.is_some() {
             subscriptions.push(accounts::subscription::subscription());
+        }
 
-            if !self.remote_accounts.is_empty() {
-                subscriptions.push(
-                    cosmic::iced::time::every(std::time::Duration::from_secs(300)).map(|_| {
-                        Message::Accounts(crate::features::accounts::AccountsAction::SyncNow)
-                    }),
-                );
-            }
+        // The tick is independent of the accounts daemon: CalDAV-only users
+        // must sync by themselves too.
+        if crate::shared::providers::sync::periodic_sync_enabled(
+            self.remote_accounts.len(),
+            self.config.radicale_connections.len(),
+        ) {
+            subscriptions.push(
+                cosmic::iced::time::every(std::time::Duration::from_secs(300)).map(|_| {
+                    Message::Accounts(crate::features::accounts::AccountsAction::SyncTick)
+                }),
+            );
         }
 
         Subscription::batch(subscriptions)

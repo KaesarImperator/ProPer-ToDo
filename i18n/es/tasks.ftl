@@ -102,3 +102,8 @@ sort-date-desc = Fecha de añadido (Nuevo a Antiguo)
 cause = Causa
 oops-something-wrong = ¡Vaya! Algo salió mal.
 error-title = Tareas - Error
+sync-notices = { $count ->
+    [one] 1 aviso
+   *[other] { $count } avisos
+}
+sync-failed = Error al sincronizar: { $error }
