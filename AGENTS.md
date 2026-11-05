@@ -8,7 +8,7 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 La fuente única del estado de las fases es **[`docs/01-roadmap.md`](docs/01-roadmap.md)**; el detalle
 de lo último hecho está en `docs/00-estado-actual.md` y `docs/05-bitacora.md`.
-A fecha 2026-11-05: B, A1 y A2 cerradas; **siguiente: A2b** (endurecimiento), luego A3 (brief listo).
+A fecha 2026-11-05: B, A1, A2 y A2b cerradas; **siguiente: A3** (brief listo en `docs/fases/A3-ui-credenciales.md`).
 
 ## Cómo arrancar una fase
 

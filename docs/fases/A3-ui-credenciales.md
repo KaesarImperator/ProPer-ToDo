@@ -2,7 +2,7 @@
 
 > **Para el agente:** documento autosuficiente. Refleja el código **después de A2 + A2b**
 > (ver `docs/01-roadmap.md`). Si algo no coincide, para y anótalo en `docs/05-bitacora.md`.
-> **Prerrequisito:** A2b cerrada (en particular `SyncReport::warnings`, ver abajo).
+> **Prerrequisito:** A2b cerrada ✅ (`SyncReport::warnings` ya existe).
 
 ## Objetivo
 
@@ -126,7 +126,7 @@ pub struct CalendarChoice { href: String, name: String }
   (`features/accounts/views.rs::sync_row(app)`), y mostrarlo **tanto** en la página CalDAV como en
   la de cuentas (que sigue igual).
 - Arreglar la suscripción periódica (trampa 3). El tick es de 300 s; documenta que es fijo.
-- Mostrar **avisos separados de errores** usando `SyncReport::warnings` (A2b): los conflictos
+- Mostrar **avisos separados de errores** usando `SyncReport::warnings` (hecho en A2b; `SyncStatus` aún no lo transporta): los conflictos
   resueltos van como aviso informativo ("se conservó la versión remota de «X»"), no como error rojo.
   `SyncStatus::Idle` gana `warnings: usize`; hoy solo tiene `had_errors`.
 - Mostrar el último error de sync (texto de `report.errors[0]`, truncado) bajo el botón, para que el
@@ -168,7 +168,7 @@ Inline (no hay `src/lib.rs`):
   `RadicaleConnection` sin `#[serde(default)]`.
 - No reescribas `accounts/views.rs::page`; solo extrae `sync_row`.
 - No migres la variable de entorno a la config: es solo para tests.
-- El e2e (`radicale_engine_end_to_end`) debe seguir verde: lo ejecuta A2b con el calendario de pruebas.
+- El e2e (`radicale_engine_end_to_end`) debe seguir verde y sin residuos: `cargo test --bin tasks radicale_engine -- --ignored` con el calendario de pruebas.
 
 ## Checkpoint de sesión
 

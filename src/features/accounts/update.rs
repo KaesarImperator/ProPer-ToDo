@@ -163,6 +163,9 @@ impl AppModel {
                 for err in &report.errors {
                     tracing::error!("sync: {err}");
                 }
+                for warning in &report.warnings {
+                    tracing::warn!("sync: {warning}");
+                }
                 self.sync_status = Some(crate::shared::providers::sync::SyncStatus::Idle {
                     at: jiff::Timestamp::now(),
                     had_errors: report.had_errors(),

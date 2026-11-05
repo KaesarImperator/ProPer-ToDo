@@ -69,21 +69,21 @@ Brief: **[`fases/A2-sync.md`](fases/A2-sync.md)**
 
 **Aceptación:** ✅ (verificado por el e2e; la cifra "< 5 s" no se midió) crear en la app aparece en el móvil en < 5 s y viceversa; editar en ambos lados no pierde datos en silencio; borrar en un lado no resucita la tarea; el segundo sync sin cambios no reescribe nada.
 
-### A2b — Endurecimiento 🟡 siguiente
+### A2b — Endurecimiento ✅
 
 Sin brief propio: es una lista corta de deudas detectadas al cerrar A2 (ver bitácora, sesión 3 y 4).
 Todo lo de aquí **debe cerrarse antes de A3**, que depende del segundo punto.
 
 - [x] **Timeouts** en `caldav-client` (`CONNECT_TIMEOUT` 10 s, `REQUEST_TIMEOUT` 30 s, `with_timeouts`; test con servidor colgado)
-- [ ] **`SyncReport::warnings`** separado de `errors`: los conflictos resueltos pasan a avisos; `had_errors()` solo mira `errors`
-- [ ] **e2e sin residuos:** el test usa el calendario de pruebas designado (`d6be8909-…`, ver `docs/03-radicale.md`),
+- [x] **`SyncReport::warnings`** separado de `errors`: los conflictos resueltos pasan a avisos; `had_errors()` solo mira `errors`
+- [x] **e2e sin residuos:** el test usa el calendario de pruebas designado (`d6be8909-…`, ver `docs/03-radicale.md`),
       UIDs con prefijo `proper-todo-e2e-` y un guard `Drop` que borra todo lo suyo aunque el test falle
-- [ ] **Medir el criterio "< 5 s":** el e2e cronometra push→visible por fuera y falla por encima de 5 s
-- [ ] Helper de test para el calendario de pruebas (crear/limpiar) reutilizable por `caldav-client/tests/radicale.rs`
+- [x] **Medir el criterio "< 5 s":** el e2e cronometra push→visible por fuera y falla por encima de 5 s
+- [x] Helper de test para el calendario de pruebas (crear/limpiar) reutilizable por `caldav-client/tests/radicale.rs`
 
-**Aceptación:** `cargo test -- --ignored` (app y crate) pasa y deja el calendario de pruebas exactamente como estaba; un fallo a mitad no deja residuos.
+**Aceptación:** ✅ (push 0,29 s y pull 0,28 s medidos; calendario idéntico antes/después) `cargo test -- --ignored` (app y crate) pasa y deja el calendario de pruebas exactamente como estaba; un fallo a mitad no deja residuos.
 
-### A3 — UI y credenciales ⬜ (tras A2b)
+### A3 — UI y credenciales 🟡 siguiente
 
 Brief: **[`fases/A3-ui-credenciales.md`](fases/A3-ui-credenciales.md)**
 

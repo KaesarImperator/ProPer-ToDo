@@ -196,6 +196,35 @@ push con ETag, conflictos y borrados.
 
 ---
 
+## Sesión 5 — 2026-11-05 (A2b: endurecimiento)
+
+**Objetivo:** cerrar las deudas de A2 antes de A3.
+
+### Hecho
+
+- `SyncReport::warnings`: los conflictos resueltos ya no son errores. `had_errors()` solo mira `errors`;
+  `merge` combina ambos; `SyncNow` registra los avisos con `tracing::warn!`. Test nuevo
+  (`warnings_do_not_count_as_errors_and_merge`). `SyncStatus` no cambia hasta A3.
+- `caldav_client::testing::CalendarGuard`: foto de los recursos del calendario al crearse y borrado de todo lo
+  nuevo en `Drop` (hilo propio con runtime, porque `Drop` puede ejecutarse dentro de tokio). Cubre lo creado por
+  el test, por la app bajo prueba o por el "cliente ajeno". Módulo `#[doc(hidden)]` siempre compilado (sin feature).
+- Usado en el e2e de la app (UID de siembra `proper-todo-e2e-…`) y en los tests `full_vtodo_lifecycle` e
+  `incremental_sync_reports_changes` del crate.
+- Latencia medida en el e2e con límite de 5 s: push ≈ 0,29 s, pull ≈ 0,28 s (red local).
+
+### Verificación
+
+- 20 tests de la app + 1 e2e, 13 del crate + 4 de integración, todos en verde.
+- El calendario de pruebas tenía 32 recursos antes y 32 después de ejecutar ambas suites (son residuos de las
+  sesiones anteriores, que borra el usuario).
+- **No verificado:** el borrado en `Drop` ante un fallo forzado a mitad de test (se confía en el desenrollado de pánico).
+
+### Siguiente paso
+
+**A3** — `docs/fases/A3-ui-credenciales.md`.
+
+---
+
 ## Plantilla para la próxima entrada
 
 ```md

@@ -13,6 +13,7 @@
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+use caldav_client::testing::CalendarGuard;
 use caldav_client::{CalDavClient, CalDavError, Vtodo, VtodoStatus};
 
 fn client() -> Option<CalDavClient> {
@@ -74,6 +75,8 @@ async fn full_vtodo_lifecycle() {
         eprintln!("skipping: RADICALE_URL not set");
         return;
     };
+    // Restores the calendar to its initial state even if an assertion fails.
+    let _guard = CalendarGuard::new(self::client().expect("client")).await;
 
     let calendar = calendar_href(&client);
     let uid = unique_uid();
@@ -165,6 +168,8 @@ async fn incremental_sync_reports_changes() {
         eprintln!("skipping: RADICALE_URL not set");
         return;
     };
+    // Restores the calendar to its initial state even if an assertion fails.
+    let _guard = CalendarGuard::new(self::client().expect("client")).await;
 
     let calendar = calendar_href(&client);
 

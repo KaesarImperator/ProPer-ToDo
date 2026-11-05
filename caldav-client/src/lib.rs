@@ -10,6 +10,10 @@ pub mod ical;
 pub mod vtodo;
 pub mod xml;
 
+/// Helpers for integration tests against a real server.
+#[doc(hidden)]
+pub mod testing;
+
 pub use client::{CalDavClient, Calendar, RemoteVtodo, SyncChanges};
 pub use error::{CalDavError, Result};
 pub use vtodo::{Vtodo, VtodoStatus};

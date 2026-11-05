@@ -30,10 +30,15 @@ pub struct SyncReport {
     pub lists_pulled: usize,
     pub tasks_pulled: usize,
     pub tasks_pushed: usize,
+    /// Failures: something did not happen and the user may need to act.
     pub errors: Vec<String>,
+    /// Informational: the pass succeeded but made a decision worth showing
+    /// (e.g. a conflict resolved in favour of the remote version).
+    pub warnings: Vec<String>,
 }
 
 impl SyncReport {
+    /// Only real failures count; warnings never turn a pass into "error".
     pub fn had_errors(&self) -> bool {
         !self.errors.is_empty()
     }
@@ -46,6 +51,7 @@ impl SyncReport {
         self.tasks_pulled += other.tasks_pulled;
         self.tasks_pushed += other.tasks_pushed;
         self.errors.extend(other.errors);
+        self.warnings.extend(other.warnings);
     }
 }
 
@@ -943,7 +949,7 @@ async fn push_task(
         };
         if server_advanced {
             apply_remote_to_local(task_store, Some(local), remote, target, now, report);
-            report.errors.push(format!(
+            report.warnings.push(format!(
                 "conflict on '{}': kept the remote version",
                 local.title
             ));
@@ -971,7 +977,7 @@ async fn push_task(
                 Ok(fresh) => {
                     if remote_wins(local.remote_updated_at, fresh.updated_at) {
                         apply_remote_to_local(task_store, Some(local), &fresh, target, now, report);
-                        report.errors.push(format!(
+                        report.warnings.push(format!(
                             "conflict on '{}': kept the remote version",
                             local.title
                         ));
@@ -1106,6 +1112,21 @@ mod tests {
     }
 
     #[test]
+    fn warnings_do_not_count_as_errors_and_merge() {
+        let mut report = SyncReport::default();
+        report.warnings.push("conflict".into());
+        assert!(!report.had_errors());
+
+        let mut other = SyncReport::default();
+        other.errors.push("boom".into());
+        other.warnings.push("another".into());
+        report.merge(other);
+        assert!(report.had_errors());
+        assert_eq!(report.warnings.len(), 2);
+        assert_eq!(report.errors.len(), 1);
+    }
+
+    #[test]
     fn remote_wins_cases() {
         let older = "2026-01-01T00:00:00Z".parse().unwrap();
         let newer = "2026-06-01T00:00:00Z".parse().unwrap();
@@ -1236,10 +1257,17 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
             .as_nanos();
-        let pull_uid = format!("proper-todo-engine-{clock}");
+        let pull_uid = format!("proper-todo-e2e-{clock}");
 
         let rt = tokio::runtime::Runtime::new().expect("tokio runtime");
         rt.block_on(async {
+            // Snapshot first: whatever happens below (even a panic), dropping
+            // the guard leaves the calendar exactly as we found it.
+            let guard = caldav_client::testing::CalendarGuard::new(
+                caldav_client::CalDavClient::new(&url, &user, &pass).expect("valid url"),
+            )
+            .await;
+
             // Seed one task from "another client" (no local mirror yet).
             let seed = caldav_client::Vtodo::new(&pull_uid, "Sembrada por fuera");
             foreign
@@ -1284,8 +1312,12 @@ mod tests {
             task.priority = Priority::High;
             task.tags = vec!["smoke".into()];
             task_store.save(&task).unwrap();
+            // Acceptance (docs/01-roadmap.md): app → server in under 5 s.
+            let started = std::time::Instant::now();
             let report = run_radicale_sync(&store, &[connection.clone()]).await;
-            println!("pass 2: {report:?}");
+            let push_latency = started.elapsed();
+            println!("pass 2: {report:?} in {push_latency:?}");
+            assert!(push_latency < std::time::Duration::from_secs(5), "push took {push_latency:?}");
             assert!(report.errors.is_empty(), "pass 2 failed: {:?}", report.errors);
             assert_eq!(report.tasks_pushed, 1);
             let pushed = task_store.get(task.id).unwrap();
@@ -1323,8 +1355,11 @@ mod tests {
                 .put_vtodo(&calendar, &remote.vtodo, etag.as_deref())
                 .await
                 .expect("foreign edit");
+            let started = std::time::Instant::now();
             let report = run_radicale_sync(&store, &[connection.clone()]).await;
-            println!("pass 4: {report:?}");
+            let pull_latency = started.elapsed();
+            println!("pass 4: {report:?} in {pull_latency:?}");
+            assert!(pull_latency < std::time::Duration::from_secs(5), "pull took {pull_latency:?}");
             assert_eq!(report.tasks_pulled, 1, "external edit must be pulled");
             let after = task_store.get(task.id).unwrap();
             assert_eq!(after.title, "Editada por fuera");
@@ -1348,9 +1383,11 @@ mod tests {
                 .expect("foreign edit 2");
             let report = run_radicale_sync(&store, &[connection.clone()]).await;
             println!("pass 5: {report:?}");
-            assert!(report.errors.iter().any(|err| {
-                err.contains("conflict") && err.contains("kept the remote version")
-            }), "conflict must surface: {:?}", report.errors);
+            assert!(report.warnings.iter().any(|warning| {
+                warning.contains("conflict") && warning.contains("kept the remote version")
+            }), "conflict must surface as a warning: {:?}", report.warnings);
+            assert!(report.errors.is_empty(), "a resolved conflict is not an error: {:?}", report.errors);
+            assert!(!report.had_errors());
             let after = task_store.get(task.id).unwrap();
             assert_eq!(after.title, "Editada por fuera (otra vez)");
             assert!(!after.dirty, "applied remote clears dirty");
@@ -1384,8 +1421,9 @@ mod tests {
             );
             assert!(task_store.get(task.id).is_err(), "mirror must be removed");
 
-            // Cleanup: no residue on the real calendar.
-            foreign.delete_vtodo(&href_of(&pull_uid), None).await.ok();
+            // Cleanup: the calendar must end exactly as it started.
+            guard.clean().await;
+            assert!(guard.leftovers().await.is_empty(), "residue left on the calendar");
         });
     }
 }
