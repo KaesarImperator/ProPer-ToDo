@@ -127,6 +127,14 @@ pub async fn run_sync(
     let enabled = match accounts.list_enabled_accounts(Service::Tasks).await {
         Ok(accounts) => accounts,
         Err(err) => {
+            // The accounts client is created lazily, so a machine without the
+            // COSMIC accounts service only finds out here. That is not a sync
+            // failure: there simply are no OAuth accounts to sync (CalDAV
+            // connections are handled by their own engine).
+            if is_accounts_service_missing(&err.to_string()) {
+                tracing::debug!("accounts service not available, skipping OAuth sync: {err}");
+                return report;
+            }
             report
                 .errors
                 .push(format!("Failed to list accounts: {err}"));
@@ -181,6 +189,12 @@ pub async fn run_sync(
     }
 
     report
+}
+
+/// D-Bus answers `ServiceUnknown` when nothing provides the accounts service.
+/// The error type belongs to another crate, so the check is on its message.
+fn is_accounts_service_missing(message: &str) -> bool {
+    message.contains("ServiceUnknown") || message.contains("was not provided by any .service files")
 }
 
 /// Whether the background sync tick should run. It must not depend on the
@@ -1186,6 +1200,14 @@ mod tests {
         let resolved = rt.block_on(resolve_password(&connection));
         std::env::remove_var(PASSWORD_ENV);
         assert_eq!(resolved, Ok(Some("from-env".to_string())));
+    }
+
+    #[test]
+    fn missing_accounts_service_is_not_a_sync_error() {
+        assert!(is_accounts_service_missing(
+            "org.freedesktop.DBus.Error.ServiceUnknown: The name dev.edfloreshz.Accounts was not provided by any .service files"
+        ));
+        assert!(!is_accounts_service_missing("authorization expired"));
     }
 
     #[test]

@@ -260,6 +260,12 @@ push con ETag, conflictos y borrados.
 - **No verificado:** el aspecto y el comportamiento reales de la ventana (no hay forma de verla desde esta sesión) ni el borrado
   de la entrada del keyring desde la UI. Las seis comprobaciones manuales están en el roadmap.
 
+### Corrección tras la primera prueba manual
+
+- Sin el servicio `dev.edfloreshz.Accounts`, el estado mostraba «Sync error … ServiceUnknown» aunque CalDAV funcionase:
+  el cliente de cuentas se crea de forma perezosa y el fallo solo sale al listar. `run_sync` ahora lo trata como «no hay
+  cuentas OAuth» (log a nivel debug), no como error. Test `missing_accounts_service_is_not_a_sync_error`.
+
 ### Siguiente paso
 
 Aceptación manual de A3 por el usuario; después **Fase C** (#164, #115).
