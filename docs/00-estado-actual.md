@@ -32,6 +32,8 @@ Base elegida: fork de `cosmic-utils/cosmic-ext-tasks` (Rust + libcosmic, GPL-3.0
   Verificado con el e2e contra el Radicale real. Dos bugs corregidos por el
   camino (`Task.dirty` no se persistía; `remote_newer` ignoraba el ETag), ver bitácora.
 
+- **A3 implementada (2026-11-05):** keyring (`oo7`), página «Calendarios CalDAV» independiente del demonio de cuentas, tick de sync propio y estado con avisos. Falta la aceptación manual en la GUI.
+
 ## En curso / siguiente
 
 Ver `docs/01-roadmap.md` (única fuente de verdad del estado de las fases).

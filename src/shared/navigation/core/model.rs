@@ -62,6 +62,7 @@ pub struct AppModel {
     pub(crate) sync_status: Option<crate::shared::providers::sync::SyncStatus>,
     /// The pass in flight was started by the user (button), not by the tick.
     pub(crate) sync_manual: bool,
+    pub(crate) caldav_form: crate::features::caldav::form::CaldavForm,
 
     /// Provider capability list from `AccountsClient::list_providers()`,
     /// carrying each provider's declared icon (URL / path / theme name).

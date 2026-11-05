@@ -225,6 +225,47 @@ push con ETag, conflictos y borrados.
 
 ---
 
+## Sesión 6 — 2026-11-05 (A3: UI de ajustes y credenciales)
+
+**Objetivo:** configurar Radicale desde la app, sin archivos ni variables de entorno, con la contraseña en el keyring.
+
+### Hecho (en los cortes del brief)
+
+1. **Keyring + motor.** `src/shared/secrets.rs` con `oo7 0.7` (save/load/delete; atributos `application`, `kind=caldav-password`,
+   `connection-id`). El motor resuelve la contraseña con `PROPER_TODO_RADICALE_PASSWORD` (solo tests) y, si no, el keyring;
+   `config::radicale_password` y su `TODO(A3)` desaparecen. Ciclo real contra gnome-keyring verificado (`--ignored`).
+2. **Sync accesible.** `periodic_sync_enabled` (el tick de 300 s ya no depende del demonio de cuentas), `AccountsAction::SyncTick`
+   (silencioso) frente a `SyncNow` (con toast si falla), no se solapan pasadas, `SyncStatus::Idle` con `warnings` y `last_error`,
+   y `accounts::views::sync_row` reutilizable (muestra el último error bajo el botón).
+3. **Página «Calendarios CalDAV».** Nueva feature `src/features/caldav/` (`form.rs` con la lógica pura, `update.rs`, `views.rs`),
+   `ContextPage::Caldav`, entrada en Ajustes y `Message::Caldav`. Alta/edición/borrado, «Probar conexión», selector de calendario,
+   errores legibles (`TestFailure`), i18n en `en` y `es`.
+4. **Tests nuevos:** 12 en la app (form, mapeo de errores, redacción de `Sensitive`, `needs_full_rescan`, tick, truncado,
+   env > keyring, RON sin «password») y 2 `--ignored` en vivo (keyring y «Probar conexión» contra el servidor real).
+
+### Decisiones y desviaciones del brief
+
+- **Confirmación de borrado en línea** (botón → «¿Eliminar?» → confirmar/cancelar) en vez de `DialogPage`: ese sistema está acoplado
+  a `DialogAction::Complete` y no merecía tocarlo.
+- **Editar siempre exige volver a «Probar»** antes de guardar (más simple y seguro que decidir qué cambios lo requieren).
+- **`Sensitive`**: la contraseña viaja en los mensajes con `Debug` redactado, porque `Message` deriva `Debug`.
+- **Cambiar calendario/URL/usuario** reenlaza la lista local (`remote_id` nuevo) y pone `sync_token = None`.
+  Hallazgo: `radicale_list` no actualizaba el `remote_id` de una lista ya existente.
+- `oo7` arrastra `zbus 6` junto al `zbus 5` que ya había en el árbol (compila; más tiempo de build, ~3 min en frío).
+
+### Verificación y lo que NO está verificado
+
+- Verde: 32 tests de la app (+3 `--ignored` en vivo), 13 + 4 del crate, e2e sin residuos.
+- La app arranca y se mantiene 12 s sin errores con `XDG_*` aislados.
+- **No verificado:** el aspecto y el comportamiento reales de la ventana (no hay forma de verla desde esta sesión) ni el borrado
+  de la entrada del keyring desde la UI. Las seis comprobaciones manuales están en el roadmap.
+
+### Siguiente paso
+
+Aceptación manual de A3 por el usuario; después **Fase C** (#164, #115).
+
+---
+
 ## Plantilla para la próxima entrada
 
 ```md

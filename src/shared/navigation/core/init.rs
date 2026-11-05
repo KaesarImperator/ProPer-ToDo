@@ -58,6 +58,7 @@ impl AppModel {
             trash_entity: widget::segmented_button::Entity::default(),
             sync_status: None,
             sync_manual: false,
+            caldav_form: Default::default(),
         };
 
         let mut tasks = vec![

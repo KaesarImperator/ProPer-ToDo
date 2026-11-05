@@ -8,11 +8,11 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 La fuente única del estado de las fases es **[`docs/01-roadmap.md`](docs/01-roadmap.md)**; el detalle
 de lo último hecho está en `docs/00-estado-actual.md` y `docs/05-bitacora.md`.
-A fecha 2026-11-05: B, A1, A2 y A2b cerradas; **siguiente: A3** (brief listo en `docs/fases/A3-ui-credenciales.md`).
+A fecha 2026-11-05: B, A1, A2 y A2b cerradas; **A3 implementada** (falta la aceptación manual en la GUI, ver roadmap); después, Fase C.
 
 ## Cómo arrancar una fase
 
-El usuario dice **"Arranca A3"** (o A2b, C, E). El agente entonces:
+El usuario dice **"Arranca C"** (o E). El agente entonces:
 
 1. Lee `docs/fases/<FASE>-*.md` (p. ej. `A3-ui-credenciales.md`; A2b no tiene brief: está en el roadmap) — es autosuficiente, no hace falta explorar el repo.
 2. Lee `docs/00-estado-actual.md` para confirmar que no cambió nada desde entonces.

@@ -181,5 +181,7 @@ mod tests {
         let ron = ron::to_string(&config).unwrap();
         let parsed: AppConfig = ron::from_str(&ron).unwrap();
         assert_eq!(parsed.radicale_connections, config.radicale_connections);
+        // The password lives in the keyring; no trace of one in config.ron.
+        assert!(!ron.to_lowercase().contains("password"), "{ron}");
     }
 }

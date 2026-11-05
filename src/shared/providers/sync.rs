@@ -1174,6 +1174,21 @@ mod tests {
     }
 
     #[test]
+    fn env_password_overrides_the_keyring() {
+        let connection = RadicaleConnection {
+            id: Uuid::new_v4(),
+            ..Default::default()
+        };
+        // Sole test touching this variable; the ignored e2e sets it too but
+        // never runs alongside the normal suite.
+        std::env::set_var(PASSWORD_ENV, "from-env");
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let resolved = rt.block_on(resolve_password(&connection));
+        std::env::remove_var(PASSWORD_ENV);
+        assert_eq!(resolved, Ok(Some("from-env".to_string())));
+    }
+
+    #[test]
     fn periodic_sync_runs_for_caldav_without_daemon_accounts() {
         assert!(!periodic_sync_enabled(0, 0));
         assert!(periodic_sync_enabled(2, 0));

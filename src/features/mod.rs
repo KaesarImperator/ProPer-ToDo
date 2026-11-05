@@ -1,4 +1,5 @@
 pub mod accounts;
+pub mod caldav;
 pub mod favorites;
 pub mod lists;
 pub mod reminders;

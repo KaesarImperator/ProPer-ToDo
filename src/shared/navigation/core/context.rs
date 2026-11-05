@@ -5,6 +5,7 @@ pub enum ContextPage {
     About,
     #[allow(unused)]
     Accounts,
+    Caldav,
     Settings,
     TaskDetails,
 }
@@ -14,6 +15,7 @@ impl ContextPage {
         match self {
             Self::About => fl!("about"),
             Self::Accounts => fl!("accounts"),
+            Self::Caldav => fl!("caldav"),
             Self::Settings => fl!("settings"),
             Self::TaskDetails => fl!("details"),
         }

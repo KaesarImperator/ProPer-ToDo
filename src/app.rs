@@ -66,6 +66,11 @@ impl Application for AppModel {
                 Message::ToggleContextDrawer,
             )
             .title(self.context_page.title()),
+            ContextPage::Caldav => app::context_drawer::context_drawer(
+                crate::features::caldav::views::page(self),
+                Message::ToggleContextDrawer,
+            )
+            .title(self.context_page.title()),
             ContextPage::Accounts => app::context_drawer::context_drawer(
                 accounts::views::page(self),
                 Message::ToggleContextDrawer,
@@ -276,6 +281,9 @@ impl Application for AppModel {
         match message {
             Message::Accounts(action) => {
                 return self.update_accounts(action);
+            }
+            Message::Caldav(action) => {
+                return self.update_caldav(action);
             }
             Message::Application(action) => {
                 return self.update_application(action);

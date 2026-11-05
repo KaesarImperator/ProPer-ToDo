@@ -1,7 +1,7 @@
 use crate::{
     config::AppConfig,
     features::{
-        accounts::AccountsAction, favorites::favorites, lists::content,
+        accounts::AccountsAction, caldav::CaldavAction, favorites::favorites, lists::content,
         reminders::reminder::ReminderMessage, search::search, tasks::details, trash::trash,
     },
     shared::{
@@ -19,6 +19,7 @@ use super::ContextPage;
 pub enum Message {
     Application(ApplicationAction),
     Accounts(AccountsAction),
+    Caldav(CaldavAction),
     CloseToast(cosmic::widget::ToastId),
     Content(content::Message),
     Details(details::Message),

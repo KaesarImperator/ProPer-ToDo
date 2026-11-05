@@ -107,3 +107,34 @@ sync-notices = { $count ->
    *[other] { $count } avisos
 }
 sync-failed = Error al sincronizar: { $error }
+caldav = Calendarios CalDAV
+caldav-none = Ningún calendario CalDAV conectado.
+caldav-count = { $count ->
+    [one] 1 conexión
+   *[other] { $count } conexiones
+}
+manage = Gestionar
+caldav-add = Añadir conexión
+caldav-edit = Editar conexión
+caldav-saved = Conexión guardada
+caldav-delete-confirm = ¿Eliminar esta conexión? Sus tareas pasan a la papelera; el servidor no se toca.
+caldav-name = Nombre
+caldav-url = URL del servidor
+caldav-username = Usuario
+caldav-password = Contraseña
+caldav-password-keep = Déjala vacía para conservar la guardada
+caldav-test = Probar conexión
+caldav-testing = Probando...
+caldav-test-ok = { $count ->
+    [one] Conectado: 1 calendario con tareas
+   *[other] Conectado: { $count } calendarios con tareas
+}
+caldav-calendar = Calendario
+caldav-err-credentials = Usuario o contraseña incorrectos.
+caldav-err-timeout = El servidor no responde.
+caldav-err-url = La URL no es válida (usa http:// o https://).
+caldav-err-no-calendars = El servidor no tiene ningún calendario que admita tareas.
+caldav-err-missing-password = Introduce la contraseña.
+caldav-err-keyring = No se pudo usar el llavero del sistema: { $detail }
+caldav-err-server = El servidor respondió con el error { $status }.
+caldav-err-other = Falló la conexión: { $detail }

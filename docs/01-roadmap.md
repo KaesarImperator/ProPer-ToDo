@@ -83,15 +83,26 @@ Todo lo de aquí **debe cerrarse antes de A3**, que depende del segundo punto.
 
 **Aceptación:** ✅ (push 0,29 s y pull 0,28 s medidos; calendario idéntico antes/después) `cargo test -- --ignored` (app y crate) pasa y deja el calendario de pruebas exactamente como estaba; un fallo a mitad no deja residuos.
 
-### A3 — UI y credenciales 🟡 siguiente
+### A3 — UI y credenciales 🟡 implementada, falta aceptación manual en la GUI
 
 Brief: **[`fases/A3-ui-credenciales.md`](fases/A3-ui-credenciales.md)**
 
-- [ ] `src/shared/secrets.rs` (keyring, `oo7`) y el motor lee la contraseña de ahí (la variable de entorno queda solo para tests)
-- [ ] Página «Calendarios CalDAV» independiente del demonio de cuentas: URL, usuario, contraseña, **Probar conexión**, selector de calendario, editar, eliminar
-- [ ] Punto de entrada real en Ajustes (la pantalla de cuentas actual es inalcanzable)
-- [ ] Sync periódico también sin demonio de cuentas; botón «Sincronizar» y estado (última vez, errores, avisos) reutilizables
-- [ ] Mensajes de error humanos (credenciales, timeout, URL, sin calendarios VTODO)
+- [x] `src/shared/secrets.rs` (keyring, `oo7`) y el motor lee la contraseña de ahí (la variable de entorno queda solo para tests)
+- [x] Página «Calendarios CalDAV» independiente del demonio de cuentas: URL, usuario, contraseña, **Probar conexión**, selector de calendario, editar, eliminar
+- [x] Punto de entrada real en Ajustes (la pantalla de cuentas actual es inalcanzable)
+- [x] Sync periódico también sin demonio de cuentas; botón «Sincronizar» y estado (última vez, errores, avisos) reutilizables
+- [x] Mensajes de error humanos (credenciales, timeout, URL, sin calendarios VTODO)
+
+**Aceptación manual pendiente (requiere ver la ventana; no se pudo automatizar):**
+
+1. Desde cero (sin variable de entorno ni demonio de cuentas): Ajustes → Calendarios CalDAV → Gestionar → Añadir → Probar → elegir calendario → Guardar; las tareas aparecen.
+2. Tras guardar: `grep -ri password ~/.config/cosmic/dev.edfloreshz.Tasks/` no devuelve nada.
+3. Con la app abierta y sin pulsar nada, un cambio externo llega en ≤ 5 min.
+4. Contraseña errónea → mensaje claro en la pantalla y la conexión no se guarda.
+5. Servidor apagado → «Probar»/«Sincronizar» terminan en ≤ 30 s con error legible.
+6. Eliminar → tareas en la papelera y entrada fuera del llavero (p. ej. con Seahorse/`secret-tool`, que no está instalado aquí).
+
+Ya verificado por tests: 1–2 a nivel de lógica (`to_connection`, RON sin «password»), 4–5 a nivel de función contra el servidor real.
 
 **Aceptación:** un usuario configura su Radicale sin tocar archivos ni variables de entorno; la contraseña no aparece en `config.ron`; servidor apagado ⇒ error legible en ≤ 30 s.
 
