@@ -1,5 +1,7 @@
 # Roadmap
 
+> **PROYECTO CERRADO el 2026-11-05** — ver [`06-cierre.md`](06-cierre.md). Lo que sigue es el plan original, conservado como historial.
+
 **Esta es la única fuente de verdad del estado de las fases** (`AGENTS.md` y `00-estado-actual.md` solo enlazan aquí).
 **Una fase por sesión.** Cada fase tiene criterio de aceptación explícito; no se pasa a la siguiente sin cumplirlo.
 

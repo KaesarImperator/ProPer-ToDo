@@ -272,6 +272,23 @@ Aceptación manual de A3 por el usuario; después **Fase C** (#164, #115).
 
 ---
 
+## Sesión 7 — 2026-11-05 (cierre del proyecto)
+
+**Objetivo:** decidir si seguir y, en su caso, cerrar con documentación.
+
+### Hecho
+
+- Primera prueba manual de A3: el estado mostraba «Sync error … ServiceUnknown» (corregido en la sesión 6).
+- La app se cerró sola por un `panic` de libcosmic (`menu_inner.rs:715`); el entorno del usuario es Cinnamon/X11, no COSMIC.
+- Balance del proyecto: solo CalDAV añadido sobre upstream, sin funciones diferenciales, y el resto del plan era pulido.
+- **Decisión del usuario: se queda con Planify.** Proyecto congelado; `docs/06-cierre.md` documenta estado, motivos y cómo retomar.
+
+### Siguiente paso
+
+Ninguno. Limpieza manual pendiente del usuario (tareas de prueba en Radicale, conexión/entrada de llavero de pruebas).
+
+---
+
 ## Plantilla para la próxima entrada
 
 ```md

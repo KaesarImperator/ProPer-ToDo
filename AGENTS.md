@@ -6,9 +6,9 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 ## Estado
 
-La fuente única del estado de las fases es **[`docs/01-roadmap.md`](docs/01-roadmap.md)**; el detalle
-de lo último hecho está en `docs/00-estado-actual.md` y `docs/05-bitacora.md`.
-A fecha 2026-11-05: B, A1, A2 y A2b cerradas; **A3 implementada** (falta la aceptación manual en la GUI, ver roadmap); después, Fase C.
+**PROYECTO CERRADO (2026-11-05).** El usuario pasa a Planify; este repo queda congelado. Lee **[`docs/06-cierre.md`](docs/06-cierre.md)**
+(motivos, estado real, qué aprovechar y cómo retomar). Hecho: B, A1, A2, A2b; A3 implementada sin aceptación manual.
+No iniciar fases nuevas sin que el usuario decida expresamente retomarlo.
 
 ## Cómo arrancar una fase
 

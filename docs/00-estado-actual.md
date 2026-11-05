@@ -1,6 +1,8 @@
 # Estado actual
 
-**Última actualización:** 2026-11-05
+> **Proyecto cerrado el 2026-11-05.** Ver [`06-cierre.md`](06-cierre.md).
+
+**Última actualización:** 2026-11-05 (cierre)
 
 ## Resumen
 
