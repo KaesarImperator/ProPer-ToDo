@@ -214,13 +214,17 @@ async fn incremental_sync_reports_changes() {
         changes.new_token.is_some(),
         "sync-collection must return a new token"
     );
-    assert!(
-        changes
-            .changed
-            .iter()
-            .any(|remote| remote.vtodo.uid == uid || remote.href.contains(&uid)),
-        "created vtodo missing from sync changes: {:?}",
-        changes.changed.iter().map(|r| &r.href).collect::<Vec<_>>()
+    let created = changes
+        .changed
+        .iter()
+        .find(|remote| remote.vtodo.uid == uid || remote.href.contains(&uid))
+        .expect("created vtodo missing from sync changes");
+
+    // Radicale inlines `calendar-data` when asked; a placeholder without it
+    // (empty UID) would mean the engine has to GET every change.
+    assert_eq!(
+        created.vtodo.summary, "Tarea para sync incremental",
+        "sync-collection must return calendar-data inline, got a bare href+etag entry"
     );
 
     cleanup(&client, &calendar, &uid).await;

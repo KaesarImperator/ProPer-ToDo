@@ -120,6 +120,55 @@ cuentas, pull con `sync-token`, push con `If-Match` y ETag en el draft.
 
 ---
 
+## Sesión 3 — 2026-11-05 (A2: motor de sync)
+
+**Objetivo:** que la app sincronice de verdad con Radicale: pull incremental,
+push con ETag, conflictos y borrados.
+
+### Hecho
+
+- `RadicaleConnection` + `AppConfig::radicale_connections` (`#[serde(default)]`;
+  test con un `config.ron` anterior). Contraseña solo por
+  `PROPER_TODO_RADICALE_PASSWORD` (TODO A3: keyring).
+- `List::sync_token`; `Task::remote_etag`; `etag` en `RemoteTask`/`RemoteTaskDraft`.
+- `caldav-client`: `put_vtodo_at`.
+- Trait: `sync_changes`, `get_task` (y `current_sync_token`) con defaults para
+  Google/Microsoft. `RadicaleProvider` los implementa (GET por entrada si no
+  viene `calendar-data`).
+- `sync.rs`: `SyncTarget`, `run_radicale_sync` (motor paralelo), `sync_list_tasks`
+  con token, `full_scan_pull`, `push_task` con resolución de conflictos,
+  `draft_from_task` completo, `apply_remote_to_local` ampliado, `remote_wins`.
+- `accounts/update.rs`: `SyncNow` lanza ambos motores y fusiona los informes
+  (ya no es no-op si no hay demonio de cuentas COSMIC).
+- Test e2e `radicale_engine_end_to_end` (`--ignored`) contra el servidor real:
+  pull completo, push, pasada sin cambios (0/0), edición externa, conflicto,
+  push simple, borrado remoto → papelera. Verde.
+
+### Decisiones
+
+1. **`Task.dirty` pasa de `#[serde(skip)]` a `#[serde(default)]`** (archivo
+   upstream, `task.rs`). El motor lee de disco, así que con `skip` ninguna
+   edición local figuraba como pendiente y nunca se subía. Cambio justificado.
+2. **`remote_newer` usa el ETag** cuando ambos lados lo tienen; los timestamps
+   (1 s de precisión) perdían ediciones externas hechas en el mismo segundo.
+3. En conflicto con `seen_remote`, el ETag guardado decide si el servidor avanzó;
+   si sí, gana el remoto y se avisa en `report.errors`. El 412 se resuelve una vez.
+
+### Problemas y limitaciones conocidas
+
+- Las ejecuciones fallidas del e2e (antes de los dos arreglos) dejaron tareas de
+  prueba en el calendario real (`Creada por la app`, `Sembrada por fuera`,
+  `Editada por fuera…`). Pendiente de borrar a mano; el test pasa limpio ya.
+- Los avisos de conflicto viajan en `report.errors`: se mezclan con errores reales.
+- `caldav-client` no fija timeouts de red.
+- Sin UI: la única forma de crear una conexión es editar `config.ron`.
+
+### Siguiente paso
+
+**A3 — UI de ajustes + keyring.**
+
+---
+
 ## Plantilla para la próxima entrada
 
 ```md

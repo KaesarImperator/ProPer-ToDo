@@ -16,6 +16,10 @@ pub struct List {
     /// Local (default) or mirrored from a remote Google/Microsoft account.
     #[serde(default)]
     pub source: TaskSource,
+    /// Last `sync-token` seen for the remote calendar. `None` means the next
+    /// sync pass runs a full scan (and seeds the token afterwards).
+    #[serde(default)]
+    pub sync_token: Option<String>,
 }
 
 impl Default for List {
@@ -28,6 +32,7 @@ impl Default for List {
             id: Uuid::default(),
             name: String::default(),
             source: TaskSource::Local,
+            sync_token: None,
         }
     }
 }
@@ -42,6 +47,7 @@ impl List {
             id: Uuid::new_v4(),
             name: name.to_string(),
             source: TaskSource::Local,
+            sync_token: None,
         }
     }
 }

@@ -1,4 +1,4 @@
-use super::model::{RemoteList, RemoteTask, RemoteTaskDraft};
+use super::model::{RemoteChanges, RemoteList, RemoteTask, RemoteTaskDraft};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ProviderError {
@@ -102,4 +102,38 @@ pub trait RemoteTaskProvider: Send + Sync {
         remote_id: &str,
         task: &RemoteTaskDraft,
     ) -> ProviderResult<()>;
+
+    /// Incremental pull of one list's changes since `sync_token`. Returns
+    /// `None` when the provider has no incremental sync (the default); the
+    /// sync engine then falls back to a full `list_tasks` scan.
+    async fn sync_changes(
+        &self,
+        _credentials: &ProviderCredentials,
+        _list_remote_id: &str,
+        _sync_token: &str,
+    ) -> ProviderResult<Option<RemoteChanges>> {
+        Ok(None)
+    }
+
+    /// Fetches a single task by its `remote_id`, used by the sync engine's
+    /// conflict resolution (fresh remote state + ETag after a `412`).
+    async fn get_task(
+        &self,
+        _credentials: &ProviderCredentials,
+        _list_remote_id: &str,
+        _remote_id: &str,
+    ) -> ProviderResult<RemoteTask> {
+        Err(ProviderError::Unsupported)
+    }
+
+    /// Current sync token for a collection, to seed the first incremental
+    /// pass after a full scan. `None`/`Unsupported`-capable by default for
+    /// providers without `sync-collection`.
+    async fn current_sync_token(
+        &self,
+        _credentials: &ProviderCredentials,
+        _list_remote_id: &str,
+    ) -> ProviderResult<Option<String>> {
+        Ok(None)
+    }
 }

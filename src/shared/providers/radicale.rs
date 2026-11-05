@@ -9,7 +9,7 @@ use caldav_client::{CalDavClient, CalDavError, RemoteVtodo, Vtodo, VtodoStatus};
 use jiff::Timestamp;
 use uuid::Uuid;
 
-use super::model::{RemoteList, RemoteTask, RemoteTaskDraft};
+use super::model::{RemoteChanges, RemoteList, RemoteTask, RemoteTaskDraft};
 use super::provider::{ProviderCredentials, ProviderError, ProviderResult, RemoteTaskProvider};
 
 /// CalDAV-backed task provider.
@@ -41,11 +41,18 @@ impl RadicaleProvider {
             ProviderCredentials::Bearer(_) => Err(ProviderError::UnsupportedCredentials),
         }
     }
+
+    /// First calendar collection on the server that advertises VTODO support,
+    /// used when a connection does not pin a specific calendar href.
+    pub async fn default_calendar(&self) -> ProviderResult<Option<caldav_client::Calendar>> {
+        let calendars = self.client.list_calendars().await?;
+        Ok(calendars.into_iter().find(|calendar| calendar.supports_vtodo))
+    }
 }
 
 /// Maps a stored VTODO to the provider-agnostic shape. The href doubles as
 /// `remote_id` because CalDAV addresses resources by URL, not by UID.
-fn vtodo_to_remote(href: &str, vtodo: &Vtodo) -> RemoteTask {
+fn vtodo_to_remote(href: &str, etag: Option<&str>, vtodo: &Vtodo) -> RemoteTask {
     let completed =
         vtodo.status == Some(VtodoStatus::Completed) || vtodo.percent_complete == Some(100);
 
@@ -62,6 +69,7 @@ fn vtodo_to_remote(href: &str, vtodo: &Vtodo) -> RemoteTask {
         percent_complete: vtodo.percent_complete,
         parent_remote_id: vtodo.parent_uid.clone(),
         recurrence: vtodo.rrule.clone(),
+        etag: etag.map(str::to_string).filter(|etag| !etag.is_empty()),
     }
 }
 
@@ -91,6 +99,12 @@ fn apply_draft(draft: &RemoteTaskDraft, vtodo: &mut Vtodo) {
     vtodo.categories = draft.tags.clone();
     vtodo.parent_uid = draft.parent_remote_id.clone();
     vtodo.rrule = draft.recurrence.clone();
+
+    // Radicale stores LAST-MODIFIED verbatim and only exposes it as an HTTP
+    // header on single GETs — never inside `calendar-data` — so stamping it
+    // on every write is what makes `RemoteTask::updated_at` available (and
+    // the incremental pass quiet) on later pulls.
+    vtodo.last_modified = Some(Timestamp::now());
 }
 
 #[allow(dead_code)]
@@ -155,12 +169,10 @@ impl RemoteTaskProvider for RadicaleProvider {
         apply_draft(task, &mut vtodo);
         vtodo.created = Some(Timestamp::now());
 
-        self.client.put_vtodo(list_remote_id, &vtodo, None).await?;
+        let etag = self.client.put_vtodo(list_remote_id, &vtodo, None).await?;
+        let href = CalDavClient::vtodo_href(list_remote_id, &uid);
 
-        Ok(vtodo_to_remote(
-            &CalDavClient::vtodo_href(list_remote_id, &uid),
-            &vtodo,
-        ))
+        Ok(vtodo_to_remote(&href, Some(&etag), &vtodo))
     }
 
     async fn delete_task(
@@ -188,19 +200,22 @@ impl RemoteTaskProvider for RadicaleProvider {
         let remote = self.client.list_vtodos(list_remote_id).await?;
         Ok(remote
             .into_iter()
-            .map(|item| vtodo_to_remote(&item.href, &item.vtodo))
+            .map(|item| vtodo_to_remote(&item.href, item.etag.as_deref(), &item.vtodo))
             .collect())
     }
 
     async fn update_task(
         &self,
         _credentials: &ProviderCredentials,
-        list_remote_id: &str,
+        _list_remote_id: &str,
         remote_id: &str,
         task: &RemoteTaskDraft,
     ) -> ProviderResult<()> {
-        // GET+PUT because the trait carries no ETag: correct, but not atomic.
-        // A2 fixes this by passing the ETag through the draft.
+        // The GET is still needed to build the resource: `apply_draft` only
+        // carries the modelled fields, so properties written by other clients
+        // (`X-*`, extra parameters) survive the overwrite only via the
+        // freshly-read body — the UID alone cannot reconstruct them, and the
+        // resource's real UID may differ from its file name.
         let RemoteVtodo {
             etag, mut vtodo, ..
         } = self.client.get_vtodo(remote_id).await?;
@@ -209,12 +224,81 @@ impl RemoteTaskProvider for RadicaleProvider {
         // `put_vtodo` derives the target href from `vtodo.uid`. Tasks this
         // client created live at `vtodo_href(calendar, uid)`, which is exactly
         // `remote_id`; resources written by another client under a different
-        // file name would land on a second href (A2 passes the href directly).
+        // file name would land on a second href, so the href is passed
+        // explicitly instead. The ETag carried by the draft (last seen by the
+        // sync engine) guards the write with `If-Match`, surfacing concurrent
+        // server-side edits as `PreconditionFailed`; without one, the ETag
+        // just fetched protects against a mid-air race only.
+        let etag = task.etag.clone().or(etag);
         self.client
-            .put_vtodo(list_remote_id, &vtodo, etag.as_deref())
+            .put_vtodo_at(remote_id, &vtodo, etag.as_deref())
             .await?;
 
         Ok(())
+    }
+
+    async fn sync_changes(
+        &self,
+        _credentials: &ProviderCredentials,
+        list_remote_id: &str,
+        sync_token: &str,
+    ) -> ProviderResult<Option<RemoteChanges>> {
+        let changes = self.client.sync_collection(list_remote_id, sync_token).await?;
+
+        let mut changed = Vec::with_capacity(changes.changed.len());
+        for item in changes.changed {
+            // Servers that honour `calendar-data` inline the body; the rest
+            // return href + ETag only (an empty placeholder `Vtodo`) and need
+            // a `GET` per entry. An in-between deletion still surfaces as a
+            // `404` and is simply dropped.
+            if item.vtodo.uid.is_empty() {
+                match self.client.get_vtodo(&item.href).await {
+                    Ok(remote) => {
+                        changed.push(vtodo_to_remote(
+                            &remote.href,
+                            remote.etag.as_deref(),
+                            &remote.vtodo,
+                        ));
+                    }
+                    Err(CalDavError::NotFound(_)) => continue,
+                    Err(err) => return Err(err.into()),
+                }
+            } else {
+                changed.push(vtodo_to_remote(
+                    &item.href,
+                    item.etag.as_deref(),
+                    &item.vtodo,
+                ));
+            }
+        }
+
+        Ok(Some(RemoteChanges {
+            changed,
+            removed: changes.removed,
+            next_token: changes.new_token,
+        }))
+    }
+
+    async fn get_task(
+        &self,
+        _credentials: &ProviderCredentials,
+        _list_remote_id: &str,
+        remote_id: &str,
+    ) -> ProviderResult<RemoteTask> {
+        let remote = self.client.get_vtodo(remote_id).await?;
+        Ok(vtodo_to_remote(
+            &remote.href,
+            remote.etag.as_deref(),
+            &remote.vtodo,
+        ))
+    }
+
+    async fn current_sync_token(
+        &self,
+        _credentials: &ProviderCredentials,
+        list_remote_id: &str,
+    ) -> ProviderResult<Option<String>> {
+        Ok(self.client.sync_token(list_remote_id).await?)
     }
 }
 
@@ -243,7 +327,7 @@ mod tests {
         apply_draft(&RemoteTaskDraft::from(&original), &mut vtodo);
         // Serialize and re-parse to also cover escaping/folding.
         let reparsed = Vtodo::from_ical(&vtodo.to_ical()).unwrap();
-        let back = vtodo_to_remote(&original.remote_id, &reparsed);
+        let back = vtodo_to_remote(&original.remote_id, None, &reparsed);
 
         assert_eq!(back.remote_id, original.remote_id);
         assert_eq!(back.title, original.title);
@@ -269,7 +353,7 @@ mod tests {
         let ical = vtodo.to_ical();
         assert!(ical.contains("STATUS:COMPLETED"), "ical: {ical}");
         assert!(ical.contains("PERCENT-COMPLETE:100"), "ical: {ical}");
-        assert!(vtodo_to_remote("/c/x.ics", &vtodo).completed);
+        assert!(vtodo_to_remote("/c/x.ics", None, &vtodo).completed);
     }
 
     #[test]
@@ -284,7 +368,7 @@ PERCENT-COMPLETE:50\r\n\
 END:VTODO\r\n\
 END:VCALENDAR\r\n";
         let vtodo = Vtodo::from_ical(ical).unwrap();
-        let remote = vtodo_to_remote("/c/x.ics", &vtodo);
+        let remote = vtodo_to_remote("/c/x.ics", None, &vtodo);
 
         assert!(!remote.completed);
         assert_eq!(remote.percent_complete, Some(50));
@@ -305,6 +389,6 @@ END:VCALENDAR\r\n";
         assert!(!ical.contains("DESCRIPTION"), "ical: {ical}");
 
         // …and the reverse direction yields an empty string, not `None`.
-        assert_eq!(vtodo_to_remote("/c/x.ics", &vtodo).notes, "");
+        assert_eq!(vtodo_to_remote("/c/x.ics", None, &vtodo).notes, "");
     }
 }

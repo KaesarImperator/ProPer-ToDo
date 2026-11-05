@@ -1,6 +1,6 @@
 # Estado actual
 
-**Última actualización:** 2026-11-04
+**Última actualización:** 2026-11-05
 
 ## Resumen
 
@@ -26,15 +26,21 @@ Base elegida: fork de `cosmic-utils/cosmic-ext-tasks` (Rust + libcosmic, GPL-3.0
   el mapeo `Vtodo` ↔ `RemoteTask`. 4 tests nuevos del mapeo; el motor de sync y
   la UI siguen intactos.
 
+- **A2 cerrada (2026-11-05):** motor de sync paralelo (`run_radicale_sync`),
+  pull incremental con `sync-token`, push con ETag, conflictos 412, borrado
+  remoto → papelera, mapeo completo de prioridad/etiquetas/recurrencia.
+  Verificado con el e2e contra el Radicale real. Dos bugs corregidos por el
+  camino (`Task.dirty` no se persistía; `remote_newer` ignoraba el ETag), ver bitácora.
+
 ## En curso
 
-Nada. A1 cerrada el 2026-11-04; el brief de A2 ya está escrito.
-La siguiente sesión arranca con **"Arranca A2"**.
+Nada. La siguiente sesión arranca con **"Arranca A3"** (falta escribir su brief).
 
 ## Pendiente inmediato
 
-1. A2 (motor de sync) según `docs/fases/A2-sync.md`.
-2. Después: A3 (UI + keyring).
+1. A3 (UI de ajustes + keyring).
+2. Borrar a mano las tareas de prueba residuales del calendario real.
+3. Fase C (#164, #115).
 
 ## Resuelto
 

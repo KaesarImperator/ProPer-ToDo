@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 pub const CONFIG_VERSION: u64 = 1;
-
 #[derive(Clone, CosmicConfigEntry, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[version = 1]
 pub struct AppConfig {
@@ -25,6 +24,11 @@ pub struct AppConfig {
     pub hide_completed: bool,
     pub last_list_id: Option<Uuid>,
     pub list_sort_by: ListSortBy,
+    /// CalDAV connections managed by Tasks itself (A3 adds the settings
+    /// UI); they are deliberately *not* COSMIC accounts, so the sync engine
+    /// handles them in a separate pass (see `sync.rs::run_radicale_sync`).
+    #[serde(default)]
+    pub radicale_connections: Vec<RadicaleConnection>,
     pub show_favorites: bool,
     pub show_trash: bool,
     pub sort_by: SortBy,
@@ -38,11 +42,34 @@ impl Default for AppConfig {
             hide_completed: false,
             last_list_id: None,
             list_sort_by: ListSortBy::default(),
+            radicale_connections: Vec::new(),
             show_favorites: true,
             show_trash: true,
             sort_by: SortBy::default(),
         }
     }
+}
+
+/// One CalDAV (Radicale) connection as configured by the user. Stored in
+/// `config.ron`; the password never is (see `radicale_password`).
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
+pub struct RadicaleConnection {
+    pub id: Uuid,
+    pub name: String,
+    /// URL base with which the `CalDavClient` is built, e.g.
+    /// `http://192.168.0.35:5232/cesar/`.
+    pub base_url: String,
+    pub username: String,
+    /// href of the calendar. When `None`, the engine discovers the first
+    /// calendar on the server that supports VTODO.
+    pub calendar_href: Option<String>,
+}
+
+/// Resolves the password for a connection. A2 reads it from the environment
+/// so the engine is testable without a settings UI.
+// TODO(A3): sustituir por el keyring del sistema.
+pub fn radicale_password(_connection: &RadicaleConnection) -> Option<String> {
+    std::env::var("PROPER_TODO_RADICALE_PASSWORD").ok()
 }
 
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
@@ -118,5 +145,48 @@ impl AppTheme {
             Self::Light => theme::system_light(),
             Self::System => theme::system_preference(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// A `config.ron` written before `radicale_connections` existed must keep
+    /// loading; cosmic-config only reads what Serde derives here.
+    #[test]
+    fn legacy_config_ron_without_radicale_connections_still_loads() {
+        let ron = r#"
+(
+    app_theme: System,
+    disabled_accounts: [],
+    hide_completed: false,
+    last_list_id: None,
+    list_sort_by: NameAsc,
+    show_favorites: true,
+    show_trash: true,
+    sort_by: DateAsc,
+)
+"#;
+        let config: AppConfig = ron::from_str(ron).expect("legacy config must still parse");
+        assert!(config.radicale_connections.is_empty());
+    }
+
+    #[test]
+    fn radicale_connection_survives_config_ron_roundtrip() {
+        let config = AppConfig {
+            radicale_connections: vec![RadicaleConnection {
+                id: Uuid::new_v4(),
+                name: "Radicale casero".into(),
+                base_url: "http://192.168.0.35:5232/cesar/".into(),
+                username: "cesar".into(),
+                calendar_href: Some("/cesar/tareas/".into()),
+            }],
+            ..Default::default()
+        };
+
+        let ron = ron::to_string(&config).unwrap();
+        let parsed: AppConfig = ron::from_str(&ron).unwrap();
+        assert_eq!(parsed.radicale_connections, config.radicale_connections);
     }
 }

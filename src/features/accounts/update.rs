@@ -180,15 +180,29 @@ impl AppModel {
                 return app::Task::batch(tasks);
             }
             AccountsAction::SyncNow => {
-                let Some(client) = self.accounts.clone() else {
-                    return app::Task::none();
-                };
                 self.sync_status = Some(crate::shared::providers::sync::SyncStatus::Syncing);
                 let store = self.store.clone();
                 let disabled = self.config.disabled_accounts.clone();
+                let radicale_connections = self.config.radicale_connections.clone();
+                let client = self.accounts.clone();
                 return cosmic::task::future(async move {
-                    let report =
-                        crate::shared::providers::sync::run_sync(store, client, &disabled).await;
+                    // OAuth accounts (only if the COSMIC accounts daemon is
+                    // there) and CalDAV connections are two independent
+                    // engines over the same per-list logic; their reports are
+                    // merged so the UI sees one pass.
+                    let mut report = match client {
+                        Some(client) => {
+                            crate::shared::providers::sync::run_sync(store.clone(), client, &disabled)
+                                .await
+                        }
+                        None => Default::default(),
+                    };
+                    let radicale = crate::shared::providers::sync::run_radicale_sync(
+                        &store,
+                        &radicale_connections,
+                    )
+                    .await;
+                    report.merge(radicale);
                     Message::Accounts(AccountsAction::SyncFinished(report))
                 });
             }

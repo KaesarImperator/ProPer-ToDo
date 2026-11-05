@@ -33,11 +33,20 @@ pub struct Task {
     /// conflict resolution during sync.
     #[serde(default)]
     pub remote_updated_at: Option<Timestamp>,
+    /// ETag of the remote resource as of the last confirmed pull/push.
+    /// Distinguishes "the server content is exactly what we last saw" (an
+    /// echo of our own push) from a foreign change the mirror never saw,
+    /// which timestamps alone cannot (LAST-MODIFIED usually has 1s
+    /// precision).
+    #[serde(default)]
+    pub remote_etag: Option<String>,
     #[serde(default)]
     pub last_synced_at: Option<Timestamp>,
     /// Set on any local edit to a remote-sourced task; read and cleared by
-    /// the sync engine to decide whether to push. Never persisted.
-    #[serde(skip)]
+    /// the sync engine to decide whether to push. Persisted: the engine
+    /// reads tasks back from disk, so a skipped flag would hide every local
+    /// edit from the push step.
+    #[serde(default)]
     pub dirty: bool,
 }
 
@@ -63,6 +72,7 @@ impl Default for Task {
             sort_order: 0,
             source: TaskSource::Local,
             remote_updated_at: None,
+            remote_etag: None,
             last_synced_at: None,
             dirty: false,
         }
@@ -117,13 +127,14 @@ impl Task {
             sort_order: 0,
             source: TaskSource::Local,
             remote_updated_at: None,
+            remote_etag: None,
             last_synced_at: None,
             dirty: false,
         }
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
 pub enum Priority {
     High,
     #[default]
@@ -152,7 +163,7 @@ impl TrashedTask {
     }
 }
 
-#[derive(Clone, Copy, Debug, Default, Deserialize, Serialize)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Deserialize, Serialize)]
 pub struct Recurrence {
     pub monday: bool,
     pub tuesday: bool,

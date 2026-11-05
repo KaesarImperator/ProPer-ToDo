@@ -56,11 +56,12 @@ pub const REPORT_VTODOS: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 pub fn report_sync_collection(sync_token: &str) -> String {
     format!(
         r#"<?xml version="1.0" encoding="utf-8"?>
-<d:sync-collection xmlns:d="DAV:">
+<d:sync-collection xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
   <d:sync-token>{}</d:sync-token>
   <d:sync-level>1</d:sync-level>
   <d:prop>
     <d:getetag/>
+    <c:calendar-data/>
   </d:prop>
 </d:sync-collection>"#,
         escape_xml(sync_token)

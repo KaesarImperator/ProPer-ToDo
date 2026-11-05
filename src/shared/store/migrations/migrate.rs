@@ -89,6 +89,7 @@ impl Migrator {
             hide_completed: old_list.hide_completed,
             created_at: jiff::Timestamp::now(),
             source: Default::default(),
+            sync_token: None,
         };
 
         self.store.lists().save(&new_list)?;
@@ -197,6 +198,7 @@ impl Migrator {
             sort_order: 0,
             source: Default::default(),
             remote_updated_at: None,
+            remote_etag: None,
             last_synced_at: None,
             dirty: false,
         };
@@ -245,6 +247,7 @@ impl Migrator {
             sort_order: 0,
             source: Default::default(),
             remote_updated_at: None,
+            remote_etag: None,
             last_synced_at: None,
             dirty: false,
         };

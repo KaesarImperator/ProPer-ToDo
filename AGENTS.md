@@ -4,14 +4,14 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 > Este archivo es el punto de entrada para cualquier sesión nueva. Si eres un agente: lee esto, luego `docs/00-estado-actual.md`, y trabaja **una fase a la vez** según `docs/01-roadmap.md`. No leas todo el repo de golpe.
 
-## Estado (2026-11-04)
+## Estado (2026-11-05)
 
 | Fase | Descripción | Estado |
 |---|---|---|
 | **B** | Crate aislado `caldav-client` + tests | ✅ Completa — 12 unitarios + 4 integración, verificados contra Docker y contra el servidor real |
 | **A1** | Fontanería: dependencia, `TaskSource`, credenciales, provider | ✅ Completa — `crate` como dependencia, `TaskSource::Radicale`, `ProviderCredentials`, `providers/radicale.rs` + 4 tests |
-| **A2** | Motor de sync con ETag | 🟡 **Siguiente** |
-| **A3** | UI de ajustes + keyring | ⬜ Pendiente |
+| **A2** | Motor de sync con ETag | ✅ Completa — pull incremental, push con ETag, conflictos, e2e verde contra el servidor real |
+| **A3** | UI de ajustes + keyring | 🟡 **Siguiente** (brief por escribir) |
 | **C** | Fixes upstream #164 y #115 | ⬜ Pendiente |
 
 ## Cómo arrancar una fase

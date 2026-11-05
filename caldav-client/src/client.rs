@@ -87,6 +87,26 @@ impl CalDavClient {
         Ok(self.base.join(href)?)
     }
 
+    /// Reduces a possibly absolute URL to its server-relative path.
+    ///
+    /// Radicale reports resource hrefs relative to the server root
+    /// (`/user/calendar/task.ics`), and the sync engine matches stored
+    /// `remote_id`s against exactly those, so whatever the user configured
+    /// (a full `http://host/user/calendar/` URL is natural to paste) must be
+    /// reduced to the same relative shape.
+    pub fn relative_path(href: &str) -> &str {
+        match href.find("://") {
+            Some(scheme) => {
+                let authority = &href[scheme + 3..];
+                match authority.find('/') {
+                    Some(path) => &authority[path..],
+                    None => "/",
+                }
+            }
+            None => href,
+        }
+    }
+
     // -- discovery ---------------------------------------------------------
 
     /// `current-user-principal` for the configured base URL.
@@ -204,7 +224,12 @@ impl CalDavClient {
         format!("{calendar}/{}.ics", sanitize_uid(uid))
     }
 
-    /// Creates or updates a VTODO.
+    /// Creates or updates a VTODO under a calendar collection, addressing the
+    /// resource by a href derived from the UID (see [`Self::vtodo_href`]).
+    ///
+    /// Prefer [`Self::put_vtodo_at`] when the href is known: it is the only
+    /// safe write path for resources created by another client, which may
+    /// name the file differently than `sanitize_uid` would.
     ///
     /// Pass the current ETag to update an existing resource (sends
     /// `If-Match`, so a concurrent edit fails with `PreconditionFailed`
@@ -216,7 +241,20 @@ impl CalDavClient {
         vtodo: &Vtodo,
         etag: Option<&str>,
     ) -> Result<String> {
-        let url = self.absolute(&Self::vtodo_href(calendar_href, &vtodo.uid))?;
+        self.put_vtodo_at(&Self::vtodo_href(calendar_href, &vtodo.uid), vtodo, etag)
+            .await
+    }
+
+    /// Writes a VTODO at an explicit href, ignoring [`Self::vtodo_href`]'s
+    /// UID-derived file name. The href must belong to a calendar collection
+    /// on this server (it is resolved with [`Self::absolute`]).
+    pub async fn put_vtodo_at(
+        &self,
+        href: &str,
+        vtodo: &Vtodo,
+        etag: Option<&str>,
+    ) -> Result<String> {
+        let url = self.absolute(href)?;
 
         let mut request = self
             .http
@@ -283,8 +321,11 @@ impl CalDavClient {
 
     /// `sync-collection` REPORT: changes since `sync_token`.
     ///
-    /// The server returns hrefs and ETags only; call [`Self::get_vtodo`] for
-    /// the ones whose ETag differs from the local copy.
+    /// `calendar-data` is requested alongside the ETag so complying servers
+    /// inline the body and no per-resource `GET` is needed; entries that come
+    /// back without data (older servers, or servers that ignore the prop)
+    /// carry a default `Vtodo` and must be resolved by the caller via
+    /// [`Self::get_vtodo`].
     pub async fn sync_collection(&self, calendar_href: &str, sync_token: &str) -> Result<SyncChanges> {
         let url = self.absolute(calendar_href)?;
         let body = xml::report_sync_collection(sync_token);
