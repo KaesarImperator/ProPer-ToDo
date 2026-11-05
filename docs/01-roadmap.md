@@ -1,6 +1,12 @@
 # Roadmap
 
-Tres fases. **Una fase por sesión.** Cada fase tiene criterio de aceptación explícito; no se pasa a la siguiente sin cumplirlo.
+**Esta es la única fuente de verdad del estado de las fases** (`AGENTS.md` y `00-estado-actual.md` solo enlazan aquí).
+**Una fase por sesión.** Cada fase tiene criterio de aceptación explícito; no se pasa a la siguiente sin cumplirlo.
+
+**Orden vigente:** B ✅ → A1 ✅ → A2 ✅ → **A2b** (endurecimiento) → **A3** (UI + keyring) → **C** (fixes de uso diario) → **E** (dogfooding y empaquetado) → D (backlog).
+
+Criterio de ordenación: primero lo que puede dejar la app colgada o mentirosa (timeouts, avisos), luego lo que la hace usable (A3),
+luego quitar asperezas (C), luego uso real antes de añadir funciones (E antes de D).
 
 ---
 
@@ -63,17 +69,35 @@ Brief: **[`fases/A2-sync.md`](fases/A2-sync.md)**
 
 **Aceptación:** ✅ (verificado por el e2e; la cifra "< 5 s" no se midió) crear en la app aparece en el móvil en < 5 s y viceversa; editar en ambos lados no pierde datos en silencio; borrar en un lado no resucita la tarea; el segundo sync sin cambios no reescribe nada.
 
-### A3 — UI y credenciales 🟡 siguiente
+### A2b — Endurecimiento 🟡 siguiente
 
-- [ ] Pantalla de ajustes: URL, usuario, contraseña, "Probar conexión", selector de calendario
-- [ ] Contraseña en keyring del sistema (`secret-service`), nunca en `config.ron`
-- [ ] Estado de sync visible (última vez, errores)
+Sin brief propio: es una lista corta de deudas detectadas al cerrar A2 (ver bitácora, sesión 3 y 4).
+Todo lo de aquí **debe cerrarse antes de A3**, que depende del segundo punto.
 
-**Aceptación:** un usuario puede configurar su Radicale sin tocar archivos ni variables de entorno.
+- [x] **Timeouts** en `caldav-client` (`CONNECT_TIMEOUT` 10 s, `REQUEST_TIMEOUT` 30 s, `with_timeouts`; test con servidor colgado)
+- [ ] **`SyncReport::warnings`** separado de `errors`: los conflictos resueltos pasan a avisos; `had_errors()` solo mira `errors`
+- [ ] **e2e sin residuos:** el test usa el calendario de pruebas designado (`d6be8909-…`, ver `docs/03-radicale.md`),
+      UIDs con prefijo `proper-todo-e2e-` y un guard `Drop` que borra todo lo suyo aunque el test falle
+- [ ] **Medir el criterio "< 5 s":** el e2e cronometra push→visible por fuera y falla por encima de 5 s
+- [ ] Helper de test para el calendario de pruebas (crear/limpiar) reutilizable por `caldav-client/tests/radicale.rs`
+
+**Aceptación:** `cargo test -- --ignored` (app y crate) pasa y deja el calendario de pruebas exactamente como estaba; un fallo a mitad no deja residuos.
+
+### A3 — UI y credenciales ⬜ (tras A2b)
+
+Brief: **[`fases/A3-ui-credenciales.md`](fases/A3-ui-credenciales.md)**
+
+- [ ] `src/shared/secrets.rs` (keyring, `oo7`) y el motor lee la contraseña de ahí (la variable de entorno queda solo para tests)
+- [ ] Página «Calendarios CalDAV» independiente del demonio de cuentas: URL, usuario, contraseña, **Probar conexión**, selector de calendario, editar, eliminar
+- [ ] Punto de entrada real en Ajustes (la pantalla de cuentas actual es inalcanzable)
+- [ ] Sync periódico también sin demonio de cuentas; botón «Sincronizar» y estado (última vez, errores, avisos) reutilizables
+- [ ] Mensajes de error humanos (credenciales, timeout, URL, sin calendarios VTODO)
+
+**Aceptación:** un usuario configura su Radicale sin tocar archivos ni variables de entorno; la contraseña no aparece en `config.ron`; servidor apagado ⇒ error legible en ≤ 30 s.
 
 ---
 
-## Fase C — Fixes upstream ⬜
+## Fase C — Fixes upstream ⬜ (tras A3)
 
 **Objetivo:** quitar las asperezas de uso diario antes de dogfooding.
 
@@ -89,6 +113,25 @@ Brief: **[`fases/A2-sync.md`](fases/A2-sync.md)**
 ### Criterio de aceptación
 
 Escribir una tarea con `Delete`/`Fn+Backspace` en el título no abre ningún diálogo, y "Add subtask" permite escribir sin segundo clic.
+
+---
+
+## Fase E — Dogfooding y empaquetado ⬜
+
+**Objetivo:** que la app sea de fiar para el uso diario antes de añadir funciones.
+
+### Tareas
+
+- [ ] **Backup previo a la primera sincronización** de cada conexión (copia del store local a `…/backups/`), con aviso en la UI
+- [ ] Flatpak: `--share=network` y acceso al Secret Service en `dev.edfloreshz.Tasks.json` (hoy no hay ni red; el keyring falla en sandbox sin esto)
+- [ ] Uso real durante **7 días** como lista de tareas principal, con diario de incidencias en la bitácora
+- [ ] Prueba con el móvil (cliente CalDAV real) editando a la vez
+- [ ] Decisión sobre la deriva de upstream: ¿rebase periódico o fork definitivo? (`sync.rs` ya es 14× el original)
+- [ ] Limpieza de warnings de clippy propios (los heredados de upstream se dejan)
+
+### Criterio de aceptación
+
+7 días seguidos sin pérdida de datos ni sync colgada, y 0 incidencias abiertas de severidad alta. Solo entonces se abre la Fase D.
 
 ---
 

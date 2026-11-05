@@ -32,15 +32,10 @@ Base elegida: fork de `cosmic-utils/cosmic-ext-tasks` (Rust + libcosmic, GPL-3.0
   Verificado con el e2e contra el Radicale real. Dos bugs corregidos por el
   camino (`Task.dirty` no se persistía; `remote_newer` ignoraba el ETag), ver bitácora.
 
-## En curso
+## En curso / siguiente
 
-Nada. La siguiente sesión arranca con **"Arranca A3"** (falta escribir su brief).
-
-## Pendiente inmediato
-
-1. A3 (UI de ajustes + keyring).
-2. Borrar a mano las tareas de prueba residuales del calendario real.
-3. Fase C (#164, #115).
+Ver `docs/01-roadmap.md` (única fuente de verdad del estado de las fases).
+Tareas de prueba residuales en el calendario real: las borra el usuario al terminar (el calendario `d6be8909-…` es el designado para pruebas).
 
 ## Resuelto
 

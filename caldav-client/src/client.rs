@@ -1,5 +1,7 @@
 //! Async CalDAV client targeting Radicale and other RFC 4791 servers.
 
+use std::time::Duration;
+
 use reqwest::{Method, StatusCode};
 use url::Url;
 
@@ -57,8 +59,25 @@ pub struct CalDavClient {
     password: String,
 }
 
+/// Limit for establishing the TCP/TLS connection.
+pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+/// Limit for a whole request (connect + send + response body). A hung server
+/// must surface as an error, never block a sync pass forever.
+pub const REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
 impl CalDavClient {
     pub fn new(base_url: &str, username: impl Into<String>, password: impl Into<String>) -> Result<Self> {
+        Self::with_timeouts(base_url, username, password, CONNECT_TIMEOUT, REQUEST_TIMEOUT)
+    }
+
+    /// Like [`CalDavClient::new`] with explicit connect/request timeouts.
+    pub fn with_timeouts(
+        base_url: &str,
+        username: impl Into<String>,
+        password: impl Into<String>,
+        connect_timeout: Duration,
+        request_timeout: Duration,
+    ) -> Result<Self> {
         let mut base = Url::parse(base_url)?;
         if !base.path().ends_with('/') {
             let path = format!("{}/", base.path());
@@ -68,6 +87,8 @@ impl CalDavClient {
         let http = reqwest::Client::builder()
             .user_agent(concat!("ProPer-ToDo/", env!("CARGO_PKG_VERSION")))
             .redirect(reqwest::redirect::Policy::limited(5))
+            .connect_timeout(connect_timeout)
+            .timeout(request_timeout)
             .build()?;
 
         Ok(Self {
@@ -489,5 +510,36 @@ mod tests {
     fn sanitizes_uids_for_file_names() {
         assert_eq!(sanitize_uid("abc-123_def.4"), "abc-123_def.4");
         assert_eq!(sanitize_uid("a/b:c d"), "a_b_c_d");
+    }
+}
+
+#[cfg(test)]
+mod timeout_tests {
+    use super::*;
+
+    /// A server that accepts the connection and never answers must produce an
+    /// error within the request timeout instead of hanging.
+    #[tokio::test]
+    async fn hung_server_times_out() {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let _holder = std::thread::spawn(move || {
+            let _conn = listener.accept();
+            std::thread::sleep(Duration::from_secs(5));
+        });
+
+        let client = CalDavClient::with_timeouts(
+            &format!("http://{addr}/u/"),
+            "u",
+            "p",
+            Duration::from_millis(500),
+            Duration::from_millis(500),
+        )
+        .unwrap();
+
+        let started = std::time::Instant::now();
+        let result = client.list_calendars().await;
+        assert!(matches!(result, Err(CalDavError::Http(ref e)) if e.is_timeout()), "{result:?}");
+        assert!(started.elapsed() < Duration::from_secs(3));
     }
 }

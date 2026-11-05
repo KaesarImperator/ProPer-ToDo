@@ -169,6 +169,33 @@ push con ETag, conflictos y borrados.
 
 ---
 
+## Sesión 4 — 2026-11-05 (replanificación, timeouts y brief de A3)
+
+**Objetivo:** adaptar la planificación a la evaluación de la sesión 3, cerrar los timeouts y dejar escrito el brief de A3.
+
+### Hecho
+
+- `caldav-client`: `CONNECT_TIMEOUT` (10 s), `REQUEST_TIMEOUT` (30 s) y `CalDavClient::with_timeouts`;
+  test `hung_server_times_out` (13 tests unitarios).
+- Roadmap reordenado: **A2b** (endurecimiento) → A3 → C → **E** (dogfooding/empaquetado) → D.
+  El roadmap pasa a ser la única fuente de verdad del estado; `AGENTS.md` y `00-estado-actual.md` enlazan en vez de duplicar.
+- `docs/fases/A3-ui-credenciales.md` escrito tras leer el código.
+- Calendario `d6be8909-…` designado para pruebas (decisión del usuario).
+
+### Hallazgos al preparar A3 (no estaban en el brief original)
+
+1. `accounts/views.rs::_settings_entry` no se usa: la pantalla de cuentas es inalcanzable desde la UI.
+2. `accounts::views::page` retorna antes de pintar el botón de sync si no hay demonio/cuentas.
+3. El tick de sync de 300 s solo se suscribe con demonio de cuentas **y** cuentas remotas: con solo Radicale nunca sincroniza solo.
+4. El manifiesto Flatpak no tiene `--share=network` ni acceso al Secret Service.
+5. `purge_orphaned_accounts` ya ignora las listas Radicale (comprobado).
+
+### Siguiente paso
+
+**A2b** (warnings separados, e2e sin residuos, medir latencia) y después **A3**.
+
+---
+
 ## Plantilla para la próxima entrada
 
 ```md

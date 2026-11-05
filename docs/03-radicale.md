@@ -226,3 +226,9 @@ git rebase upstream/main                # opcional
 ```
 
 Mantener los cambios propios en commits pequeños y separados por fase, para que un rebase contra upstream no duela.
+
+
+## Calendario de pruebas designado
+
+El calendario `d6be8909-c122-e21e-91fd-304a1e7d2313` del servidor real queda **designado para pruebas** (decisión del usuario, 2026-11-05):
+los tests `--ignored` pueden crear y borrar ahí. Aun así deben limpiar lo suyo (UIDs con prefijo `proper-todo-e2e-`); lo que quede lo borra el usuario a mano.

@@ -4,24 +4,20 @@ App de tareas para escritorio **COSMIC**, fork de [`cosmic-utils/cosmic-ext-task
 
 > Este archivo es el punto de entrada para cualquier sesión nueva. Si eres un agente: lee esto, luego `docs/00-estado-actual.md`, y trabaja **una fase a la vez** según `docs/01-roadmap.md`. No leas todo el repo de golpe.
 
-## Estado (2026-11-05)
+## Estado
 
-| Fase | Descripción | Estado |
-|---|---|---|
-| **B** | Crate aislado `caldav-client` + tests | ✅ Completa — 12 unitarios + 4 integración, verificados contra Docker y contra el servidor real |
-| **A1** | Fontanería: dependencia, `TaskSource`, credenciales, provider | ✅ Completa — `crate` como dependencia, `TaskSource::Radicale`, `ProviderCredentials`, `providers/radicale.rs` + 4 tests |
-| **A2** | Motor de sync con ETag | ✅ Completa — pull incremental, push con ETag, conflictos, e2e verde contra el servidor real |
-| **A3** | UI de ajustes + keyring | 🟡 **Siguiente** (brief por escribir) |
-| **C** | Fixes upstream #164 y #115 | ⬜ Pendiente |
+La fuente única del estado de las fases es **[`docs/01-roadmap.md`](docs/01-roadmap.md)**; el detalle
+de lo último hecho está en `docs/00-estado-actual.md` y `docs/05-bitacora.md`.
+A fecha 2026-11-05: B, A1 y A2 cerradas; **siguiente: A2b** (endurecimiento), luego A3 (brief listo).
 
 ## Cómo arrancar una fase
 
-El usuario dice **"Arranca A1"** (o A2, A3, C). El agente entonces:
+El usuario dice **"Arranca A3"** (o A2b, C, E). El agente entonces:
 
-1. Lee `docs/fases/<FASE>-*.md` (p. ej. `A1-fontaneria.md`) — es autosuficiente, no hace falta explorar el repo.
+1. Lee `docs/fases/<FASE>-*.md` (p. ej. `A3-ui-credenciales.md`; A2b no tiene brief: está en el roadmap) — es autosuficiente, no hace falta explorar el repo.
 2. Lee `docs/00-estado-actual.md` para confirmar que no cambió nada desde entonces.
 3. Trabaja **solo** el alcance de esa fase. Lo que esté "fuera de alcance" en el brief no se toca.
-4. Al terminar: tests verdes → entrada en `docs/05-bitacora.md` → actualizar `00-estado-actual.md` y la tabla de arriba → commit → push.
+4. Al terminar: tests verdes → entrada en `docs/05-bitacora.md` → actualizar `docs/01-roadmap.md` (casillas y estado) y `00-estado-actual.md` → commit → push.
 
 Si el brief no coincide con el código, **parar y anotarlo** en la bitácora en vez de improvisar.
 
