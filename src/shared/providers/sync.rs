@@ -5,7 +5,7 @@ use caldav_client::{CalDavClient, CalDavError};
 use jiff::Timestamp;
 use uuid::Uuid;
 
-use crate::config::{radicale_password, RadicaleConnection};
+use crate::config::RadicaleConnection;
 use crate::features::lists::list::List;
 use crate::features::tasks::task::{Priority, Recurrence, Task, TrashedTask};
 use crate::shared::providers::model::{RemoteTask, RemoteTaskDraft};
@@ -176,6 +176,21 @@ pub async fn run_sync(
     report
 }
 
+/// Name of the environment variable that overrides the keyring. Meant for
+/// tests and headless runs only; the UI never writes it.
+pub const PASSWORD_ENV: &str = "PROPER_TODO_RADICALE_PASSWORD";
+
+/// Where a connection's password comes from: the environment override first
+/// (tests/CI), otherwise the system keyring.
+async fn resolve_password(
+    connection: &RadicaleConnection,
+) -> Result<Option<String>, crate::shared::secrets::SecretError> {
+    if let Ok(password) = std::env::var(PASSWORD_ENV) {
+        return Ok(Some(password));
+    }
+    crate::shared::secrets::load_password(connection.id).await
+}
+
 /// Two-way sync pass for the CalDAV connections registered in Tasks itself.
 ///
 /// Deliberately separate from [`run_sync`]: Radicale connections are not
@@ -185,12 +200,19 @@ pub async fn run_radicale_sync(store: &Store, connections: &[RadicaleConnection]
     let mut report = SyncReport::default();
 
     for connection in connections {
-        let Some(password) = radicale_password(connection) else {
-            report.errors.push(format!(
-                "{}: no password (set PROPER_TODO_RADICALE_PASSWORD)",
-                connection.name
-            ));
-            continue;
+        let password = match resolve_password(connection).await {
+            Ok(Some(password)) => password,
+            Ok(None) => {
+                report.errors.push(format!(
+                    "{}: the password is missing; edit the connection in Settings to enter it again",
+                    connection.name
+                ));
+                continue;
+            }
+            Err(err) => {
+                report.errors.push(format!("{}: {err}", connection.name));
+                continue;
+            }
         };
         let credentials = ProviderCredentials::Basic {
             username: connection.username.clone(),

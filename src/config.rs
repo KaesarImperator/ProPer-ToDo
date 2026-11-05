@@ -65,13 +65,6 @@ pub struct RadicaleConnection {
     pub calendar_href: Option<String>,
 }
 
-/// Resolves the password for a connection. A2 reads it from the environment
-/// so the engine is testable without a settings UI.
-// TODO(A3): sustituir por el keyring del sistema.
-pub fn radicale_password(_connection: &RadicaleConnection) -> Option<String> {
-    std::env::var("PROPER_TODO_RADICALE_PASSWORD").ok()
-}
-
 #[derive(Clone, Copy, Debug, Default, Deserialize, Eq, PartialEq, Serialize)]
 pub enum ListSortBy {
     Manual,
